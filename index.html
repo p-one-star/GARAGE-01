@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FACTORY GARAGE - SHUTTER EXIT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 基本設定 --- */
+        :root {
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff0055;
+        }
+
+        /* 透過設定: 背景色なし */
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            font-family: 'Black Ops One', cursive;
+            overflow: hidden;
+            color: var(--neon-cyan);
+            -webkit-font-smoothing: antialiased; 
+        }
+
+        /* --- シャッター演出 --- */
+        #shutter-door {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #050505; /* ほぼ真っ黒 */
+            z-index: 9999;
+            transform: translateY(-100%); /* 最初は上に隠れている */
+            transition: transform 0.6s cubic-bezier(0.5, 0, 0.75, 0); /* 重力で落ちるような加速 */
+            display: flex;
+            align-items: flex-end; /* 下端に装飾 */
+            justify-content: center;
+            /* シャッターの質感（横ライン） */
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 40px,
+                rgba(30, 30, 30, 0.8) 41px,
+                rgba(0, 0, 0, 1) 42px
+            );
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        /* シャッターが閉まる時のクラス */
+        #shutter-door.closed {
+            transform: translateY(0%);
+        }
+
+        /* シャッター下部の警告ライン */
+        .shutter-bottom-bar {
+            width: 100%;
+            height: 20px;
+            background: repeating-linear-gradient(
+                45deg,
+                #000,
+                #000 20px,
+                #333 20px,
+                #333 40px
+            );
+            border-top: 2px solid #333;
+            border-bottom: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+
+        /* 閉まった時に出る文字 */
+        .system-locked-text {
+            position: absolute;
+            bottom: 50%;
+            width: 100%;
+            text-align: center;
+            font-size: 5vw;
+            color: #1a1a1a;
+            text-shadow: -1px -1px 0 #333;
+            letter-spacing: 1em;
+            opacity: 0;
+            transition: opacity 0.2s 0.6s; /* シャッターが閉まった後に表示 */
+        }
+        #shutter-door.closed .system-locked-text {
+            opacity: 1;
+        }
+
+        /* --- ノイズ (透過用) --- */
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 90;
+            opacity: 0.1;
+            background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)"/%3E%3C/svg%3E');
+            animation: noise-shift 0.5s infinite steps(2);
+        }
+        @keyframes noise-shift {
+            0% { background-position: 0 0; }
+            100% { background-position: 50px 50px; }
+        }
+
+        /* --- 画面の歪み (悪ガキ仕様) --- */
+        .screen-glitch { animation: none; }
+        .screen-glitch.active { animation: glitch-skew 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+        @keyframes glitch-skew {
+            0% { transform: skewX(0deg); }
+            20% { transform: skewX(-2deg); }
+            40% { transform: skewX(2deg); }
+            60% { transform: skewX(-1deg); filter: hue-rotate(10deg); }
+            80% { transform: skewX(0.5deg); }
+            100% { transform: skewX(0deg); filter: none; }
+        }
+
+        /* --- テキストグリッチ (透過対応) --- */
+        .glitch-text { position: relative; }
+        .glitch-text.active::before, .glitch-text.active::after {
+            content: attr(data-text);
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0.8; background: transparent;
+        }
+        .glitch-text.active::before {
+            color: var(--neon-pink); z-index: -1;
+            animation: glitch-anim-1 0.3s infinite linear alternate-reverse;
+            mix-blend-mode: screen;
+        }
+        .glitch-text.active::after {
+            color: #00ff00; z-index: -2;
+            animation: glitch-anim-2 0.3s infinite linear alternate-reverse;
+            mix-blend-mode: screen;
+        }
+        @keyframes glitch-anim-1 {
+            0% { clip-path: inset(20% 0 80% 0); transform: translate(-4px, 0); }
+            100% { clip-path: inset(60% 0 10% 0); transform: translate(4px, 0); }
+        }
+        @keyframes glitch-anim-2 {
+            0% { clip-path: inset(10% 0 60% 0); transform: translate(4px, 0); }
+            100% { clip-path: inset(80% 0 5% 0); transform: translate(-4px, 0); }
+        }
+
+        /* --- ERROR ポップアップ --- */
+        #error-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: transparent; z-index: 100;
+            display: none; align-items: center; justify-content: center; pointer-events: none;
+        }
+        .error-msg {
+            font-size: 5rem; color: var(--neon-pink);
+            border: 4px solid var(--neon-pink); padding: 20px;
+            background: transparent; text-shadow: 2px 2px 0 #000;
+            transform: rotate(-5deg);
+        }
+
+        /* --- レイアウト --- */
+        .garage-container {
+            display: flex; width: 100vw; height: 100vh;
+            overflow-x: auto; overflow-y: hidden;
+            scroll-snap-type: x mandatory; scrollbar-width: none;
+        }
+        .garage-container::-webkit-scrollbar { display: none; }
+        
+        .panel {
+            flex: 0 0 100vw; height: 100vh;
+            scroll-snap-align: start; scroll-snap-stop: always;
+            position: relative; background: transparent; border: none;
+        }
+
+        /* UIパーツ */
+        .neon-btn {
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            transition: 0.2s; cursor: pointer;
+            text-shadow: 1px 1px 2px black;
+        }
+        .neon-btn:hover {
+            background: rgba(0, 240, 255, 0.1);
+            box-shadow: 0 0 15px var(--neon-cyan);
+            text-shadow: 2px 0 var(--neon-pink), -2px 0 #00ff00;
+        }
+        
+        .hud-box {
+            border: 2px solid rgba(0, 240, 255, 0.5);
+            background: transparent; padding: 24px;
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            text-shadow: 1px 1px 2px #000;
+            box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.05);
+        }
+        
+        .nav-arrow {
+            position: fixed; top: 50%; transform: translateY(-50%);
+            font-size: 3rem; color: var(--neon-cyan); background: transparent; border: none; z-index: 50;
+            opacity: 0.6; transition: 0.2s; text-shadow: 2px 2px 4px #000;
+        }
+        .nav-arrow:hover { opacity: 1; transform: translateY(-50%) scale(1.1); }
+        .nav-arrow.left { left: 10px; }
+        .nav-arrow.right { right: 10px; }
+        @media (max-width: 768px) { .nav-arrow { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div class="noise-overlay"></div>
+
+    <div id="error-overlay">
+        <div class="error-msg">SYSTEM ERROR</div>
+    </div>
+
+    <!-- シャッター要素 -->
+    <div id="shutter-door">
+        <div class="system-locked-text">SYSTEM LOCKED</div>
+        <div class="shutter-bottom-bar"></div>
+    </div>
+
+    <!-- EXIT Button: シャッター関数を呼び出し -->
+    <a href="#" class="fixed top-6 left-6 z-[100] neon-btn px-6 py-2" onclick="closeShutterAndExit(); return false;">
+        EXIT
+    </a>
+
+    <button class="nav-arrow left" id="btn-prev">&lt;</button>
+    <button class="nav-arrow right" id="btn-next">&gt;</button>
+
+    <div class="garage-container screen-glitch" id="scroller">
+        
+        <!-- LEFT PANEL -->
+        <section id="panel-left" class="panel flex items-center justify-center">
+            <div class="relative z-10 hud-box transform -translate-x-5 md:-translate-x-16">
+                <h2 class="text-3xl mb-2 glitch-text" data-text="SEC: A-01">SEC: A-01</h2>
+                <p class="text-xs text-cyan-700 mb-6 tracking-widest">STORAGE UNIT</p>
+                <div class="space-y-2 text-cyan-500 text-xl font-mono">
+                    <p>TOOL: <span class="text-gray-400">NONE</span></p>
+                    <p>FUEL: <span class="text-red-600">EMPTY</span></p>
+                    <p>VISION: <span class="animate-pulse">LOADING...</span></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CENTER PANEL -->
+        <section id="panel-center" class="panel flex items-center justify-center">
+            <div class="relative z-10 text-center w-full">
+                <div class="mb-12 inline-block relative">
+                    <h1 class="text-7xl md:text-9xl text-white glitch-text" style="text-shadow: 4px 4px 8px #000;" data-text="GARAGE" id="main-title">
+                        GARAGE
+                    </h1>
+                    <p class="mt-2 text-lg tracking-[0.5em] text-cyan-600 opacity-80" style="text-shadow: 1px 1px 2px #000;">
+                        AUTHORIZED PERSONNEL ONLY
+                    </p>
+                </div>
+                <div>
+                    <button class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION">
+                        IGNITION
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL -->
+        <section id="panel-right" class="panel flex items-center justify-center">
+            <div class="relative z-10 hud-box transform translate-x-5 md:translate-x-16 text-right">
+                <h2 class="text-3xl mb-2 glitch-text" data-text="STATUS">STATUS</h2>
+                <div class="flex flex-col gap-3 text-right text-sm font-mono text-cyan-400">
+                    <div class="border-b border-cyan-900 pb-1">
+                        NET: <span class="text-cyan-200">ONLINE</span>
+                    </div>
+                    <div class="border-b border-cyan-900 pb-1">
+                        SYNC: <span class="text-cyan-200">STABLE</span>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-2" id="random-code">
+                        0x4F92...OK
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        const scroller = document.getElementById('scroller');
+        const container = document.querySelector('.screen-glitch');
+        const titleText = document.getElementById('main-title');
+        const errorOverlay = document.getElementById('error-overlay');
+        const randomCode = document.getElementById('random-code');
+
+        window.addEventListener('load', () => {
+            scroller.scrollTo(window.innerWidth, 0);
+        });
+
+        document.getElementById('btn-prev').addEventListener('click', () => 
+            scroller.scrollBy({ left: -window.innerWidth, behavior: 'smooth' }));
+        document.getElementById('btn-next').addEventListener('click', () => 
+            scroller.scrollBy({ left: window.innerWidth, behavior: 'smooth' }));
+
+        // --- シャッター演出 & 戻る処理 ---
+        function closeShutterAndExit() {
+            const shutter = document.getElementById('shutter-door');
+            
+            // 1. シャッターを下ろす
+            shutter.classList.add('closed');
+            
+            // 2. 下りきったタイミング（0.7秒後）で前のページへ戻る
+            setTimeout(() => {
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    console.log("No history to go back to.");
+                }
+            }, 700);
+        }
+
+        // --- Mild Glitch Engine ---
+
+        const mildDistortion = () => {
+            container.classList.add('active');
+            setTimeout(() => { container.classList.remove('active'); }, 200);
+            const nextTime = Math.random() * 10000 + 5000; 
+            setTimeout(mildDistortion, nextTime);
+        };
+
+        const titleGlitch = () => {
+            titleText.classList.add('active');
+            setTimeout(() => { titleText.classList.remove('active'); }, 150);
+            const nextTime = Math.random() * 5000 + 3000;
+            setTimeout(titleGlitch, nextTime);
+        };
+
+        setInterval(() => {
+            const val = Math.floor(Math.random() * 9999);
+            randomCode.innerText = `0x${val}...OK`;
+        }, 2000);
+
+        const rareError = () => {
+            if (Math.random() > 0.8) {
+                errorOverlay.style.display = 'flex';
+                setTimeout(() => { errorOverlay.style.display = 'none'; }, 100);
+            }
+            const nextTime = Math.random() * 40000 + 20000;
+            setTimeout(rareError, nextTime);
+        };
+
+        setTimeout(mildDistortion, 3000);
+        setTimeout(titleGlitch, 2000);
+        setTimeout(rareError, 10000);
+    </script>
+</body>
+</html>
+
