@@ -24,11 +24,7 @@
             color: var(--neon-cyan);
             -webkit-font-smoothing: antialiased; 
         }
-            body {
-  background: url("image1.PNG") center center no-repeat;
-  background-size: cover;
-  background-attachment: fixed;
-}
+
         /* --- シャッター演出 --- */
         #shutter-door {
             position: fixed;
@@ -347,27 +343,7 @@
         setTimeout(mildDistortion, 3000);
         setTimeout(titleGlitch, 2000);
         setTimeout(rareError, 10000);
-        // --- IGNITION tap sound ---
-        <!-- IGNITION sound -->
-<audio id="engineSound" src="IGNITION.m4a" preload="auto"></audio>
-
-<script>
-  const ignitionBtn = document.querySelector('.neon-btn'); // IGNITIONボタン
-  const engineSound = document.getElementById('engineSound');
-
-  if (ignitionBtn && engineSound) {
-    ignitionBtn.addEventListener('click', () => {
-      engineSound.pause();
-      engineSound.currentTime = 0;
-      engineSound.play().catch(err => console.log('play blocked:', err));
-    });
-  }
-// 初回アクセス/リロード時は必ず GARAGE 位置へ
-if (!location.hash) location.hash = '#garage';
-setTimeout(() => document.getElementById('garage')?.scrollIntoView({ behavior:'auto', block:'start' }), 100);
-</script>
-
-<audio id="engineSound" src="IGNITION.m4a" preload="auto"></audio>
-
+    </script>
 </body>
 </html>
+
