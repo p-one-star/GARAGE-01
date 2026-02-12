@@ -362,4 +362,6 @@
       engineSound.play().catch(err => console.log('play blocked:', err));
     });
   }
+// 初回アクセス/リロード時は必ず GARAGE 位置へ
+if (!location.hash) location.hash = '#garage';
 </script>
