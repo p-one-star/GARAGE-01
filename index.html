@@ -347,6 +347,16 @@
         setTimeout(mildDistortion, 3000);
         setTimeout(titleGlitch, 2000);
         setTimeout(rareError, 10000);
+        // --- IGNITION tap sound ---
+const ignitionBtn = document.querySelector('.neon-btn'); // IGNITIONボタン
+const engineSound = document.getElementById('engineSound'); // 352行目のaudio
+
+if (ignitionBtn && engineSound) {
+  ignitionBtn.addEventListener('click', () => {
+    engineSound.currentTime = 0;
+    engineSound.play().catch(err => console.log('play blocked:', err));
+  });
+}
     </script>
     
     <audio id="engineSound" src="IGNITION.MOV" preload="auto"></audio>
