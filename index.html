@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - FINAL 1.1</title>
+    <title>FACTORY GARAGE - FINAL ON</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -273,55 +273,50 @@
         const randomCode = document.getElementById('random-code');
 
         // --- AUDIO SETUP ---
-        // 重要: 音量1% (0.01) スタート
-        const ignitionAudio = new Audio('IGNITION.m4a');
+        // 新しい音源 ON.m4a を採用
+        const ignitionAudio = new Audio('ON.m4a');
         ignitionAudio.loop = false;
         
-        let isEngineOn = false;     // 再生中フラグ
-        let fadeInterval = null;    // フェードアウト用タイマー
+        let isEngineOn = false;
+        let fadeInterval = null;
 
-        // IGNITIONボタンのトグル処理
+        // IGNITIONボタン処理
         function toggleIgnition() {
             const btn = document.getElementById('ignition-btn');
 
             if (!isEngineOn) {
-                // === 再生開始 (START) ===
-                if (fadeInterval) clearInterval(fadeInterval); // フェードアウト中に押されたらキャンセル
+                // === 再生 (START) ===
+                if (fadeInterval) clearInterval(fadeInterval);
 
-                ignitionAudio.volume = 0.01; // 音量1%で固定
+                // 音量は調整せず原音(1.0)で再生
+                ignitionAudio.volume = 1.0; 
                 ignitionAudio.currentTime = 0;
                 
-                // 再生試行
                 ignitionAudio.play().then(() => {
                     isEngineOn = true;
-                    btn.classList.add('active-engine'); // 演出ON
+                    btn.classList.add('active-engine');
                 }).catch(e => {
                     console.log("Play error:", e);
                 });
 
             } else {
                 // === 停止 (FADE OUT) ===
-                // 既に再生中ならフェードアウトへ移行
                 startFadeOut(btn);
             }
         }
 
-        // フェードアウト処理
+        // フェードアウト処理 (音量1.0から0へ)
         function startFadeOut(btn) {
-            // 重複実行防止
             if (fadeInterval) return;
 
-            // ボタンの演出を先に消して「止まる感」を出す
             btn.classList.remove('active-engine');
-            isEngineOn = false; // フラグは先に下ろして連打を防ぐ
+            isEngineOn = false;
 
-            // 50msごとに音量を少しずつ下げる
+            // 50msごとに音量を0.05ずつ下げる (約1秒で消える)
             fadeInterval = setInterval(() => {
-                // 現在の音量から 0.001 ずつ引く (元が0.01と小さいので細かく)
-                if (ignitionAudio.volume > 0.001) {
-                    ignitionAudio.volume = Math.max(0, ignitionAudio.volume - 0.001);
+                if (ignitionAudio.volume > 0.05) {
+                    ignitionAudio.volume -= 0.05;
                 } else {
-                    // ほぼ0になったら停止
                     stopAudioCompletely();
                 }
             }, 50); 
@@ -334,20 +329,20 @@
             }
             ignitionAudio.pause();
             ignitionAudio.currentTime = 0;
-            ignitionAudio.volume = 0.01; // 次回のためにリセット
+            // 次回のためにリセット
+            ignitionAudio.volume = 1.0;
             isEngineOn = false;
         }
 
-        // 最後まで再生された場合の処理
+        // 再生終了時
         ignitionAudio.addEventListener('ended', () => {
             isEngineOn = false;
             const btn = document.getElementById('ignition-btn');
             if(btn) btn.classList.remove('active-engine');
-            ignitionAudio.volume = 0.01; // 音量リセット
+            ignitionAudio.volume = 1.0;
         });
 
-
-        // --- UIロジック (維持) ---
+        // --- UI Logic ---
         window.addEventListener('load', () => {
             scroller.scrollTo(window.innerWidth, 0);
         });
@@ -358,11 +353,9 @@
             scroller.scrollBy({ left: window.innerWidth, behavior: 'smooth' }));
 
         function closeShutterAndExit() {
-            // EXIT時は即座にフェードアウト停止
             if (isEngineOn || !ignitionAudio.paused) {
                 startFadeOut(document.getElementById('ignition-btn'));
             }
-
             const shutter = document.getElementById('shutter-door');
             shutter.classList.add('closed');
             setTimeout(() => {
