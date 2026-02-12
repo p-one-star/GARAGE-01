@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - FINAL</title>
+    <title>FACTORY GARAGE - IGNITION AUDIO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -14,21 +14,16 @@
             --neon-pink: #ff0055;
         }
 
-        /* 【重要】背景画像の設定
-           image1.PNG が同じフォルダにあれば、フルスクリーンで表示されます。
-           画像がない場合は、背景は透明（ブラウザのデフォルト色）になります。
-        */
+        /* 背景画像設定 */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             
-            /* 背景色を削除し、画像のみを指定 */
             background-color: transparent; 
             background-image: url('image1.PNG');
             
-            /* 画像を画面いっぱいに広げ、中央に配置 */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -40,74 +35,49 @@
             -webkit-font-smoothing: antialiased; 
         }
 
-        /* --- シャッター演出 (最前面) --- */
+        /* PCでの強制ズーム設定 */
+        @media (min-width: 768px) {
+            html, body {
+                background-size: auto 130vh;
+            }
+        }
+
+        /* --- シャッター演出 --- */
         #shutter-door {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: #050505;
             z-index: 9999;
-            transform: translateY(-100%); /* 最初は上に隠す */
+            transform: translateY(-100%);
             transition: transform 0.6s cubic-bezier(0.5, 0, 0.75, 0);
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
+            display: flex; align-items: flex-end; justify-content: center;
             background-image: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 40px,
-                rgba(30, 30, 30, 0.8) 41px,
-                rgba(0, 0, 0, 1) 42px
+                0deg, transparent, transparent 40px, rgba(30, 30, 30, 0.8) 41px, rgba(0, 0, 0, 1) 42px
             );
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             pointer-events: none;
         }
-
         #shutter-door.closed {
             transform: translateY(0%);
             pointer-events: auto;
         }
-
         .shutter-bottom-bar {
-            width: 100%;
-            height: 20px;
-            background: repeating-linear-gradient(
-                45deg,
-                #000,
-                #000 20px,
-                #333 20px,
-                #333 40px
-            );
-            border-top: 2px solid #333;
-            border-bottom: 2px solid var(--neon-cyan);
+            width: 100%; height: 20px;
+            background: repeating-linear-gradient(45deg, #000, #000 20px, #333 20px, #333 40px);
+            border-top: 2px solid #333; border-bottom: 2px solid var(--neon-cyan);
             box-shadow: 0 0 15px var(--neon-cyan);
         }
-
         .system-locked-text {
-            position: absolute;
-            bottom: 50%;
-            width: 100%;
-            text-align: center;
-            font-size: 5vw;
-            color: #1a1a1a;
-            text-shadow: -1px -1px 0 #333;
-            letter-spacing: 1em;
-            opacity: 0;
-            transition: opacity 0.2s 0.6s;
+            position: absolute; bottom: 50%; width: 100%; text-align: center;
+            font-size: 5vw; color: #1a1a1a; text-shadow: -1px -1px 0 #333;
+            letter-spacing: 1em; opacity: 0; transition: opacity 0.2s 0.6s;
         }
-        #shutter-door.closed .system-locked-text {
-            opacity: 1;
-        }
+        #shutter-door.closed .system-locked-text { opacity: 1; }
 
         /* --- ノイズ --- */
         .noise-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            pointer-events: none;
-            z-index: 90;
-            opacity: 0.1;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 90; opacity: 0.1;
             background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)"/%3E%3C/svg%3E');
             animation: noise-shift 0.5s infinite steps(2);
         }
@@ -116,7 +86,7 @@
             100% { background-position: 50px 50px; }
         }
 
-        /* --- 画面の歪み --- */
+        /* --- グリッチ演出 --- */
         .screen-glitch { animation: none; }
         .screen-glitch.active { animation: glitch-skew 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) both; }
         @keyframes glitch-skew {
@@ -128,7 +98,6 @@
             100% { transform: skewX(0deg); filter: none; }
         }
 
-        /* --- テキストグリッチ --- */
         .glitch-text { position: relative; }
         .glitch-text.active::before, .glitch-text.active::after {
             content: attr(data-text);
@@ -154,7 +123,7 @@
             100% { clip-path: inset(80% 0 5% 0); transform: translate(-4px, 0); }
         }
 
-        /* --- ERROR ポップアップ --- */
+        /* --- UIパーツ --- */
         #error-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: transparent; z-index: 100;
@@ -167,7 +136,6 @@
             transform: rotate(-5deg);
         }
 
-        /* --- レイアウト --- */
         .garage-container {
             display: flex; width: 100vw; height: 100vh;
             overflow-x: auto; overflow-y: hidden;
@@ -181,18 +149,29 @@
             position: relative; background: transparent; border: none;
         }
 
-        /* UIパーツ */
         .neon-btn {
             background: transparent;
             border: 2px solid var(--neon-cyan);
             color: var(--neon-cyan);
-            transition: 0.2s; cursor: pointer;
+            transition: all 0.2s; cursor: pointer;
             text-shadow: 1px 1px 2px black;
         }
         .neon-btn:hover {
             background: rgba(0, 240, 255, 0.1);
             box-shadow: 0 0 15px var(--neon-cyan);
             text-shadow: 2px 0 var(--neon-pink), -2px 0 #00ff00;
+        }
+
+        /* エンジン始動中のボタン演出 */
+        .neon-btn.active-engine {
+            background: rgba(0, 240, 255, 0.2);
+            box-shadow: 0 0 25px var(--neon-cyan), inset 0 0 10px var(--neon-cyan);
+            color: #fff;
+            animation: engine-pulse 0.1s infinite alternate;
+        }
+        @keyframes engine-pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.02); }
         }
         
         .hud-box {
@@ -217,18 +196,15 @@
 <body>
 
     <div class="noise-overlay"></div>
+    <div id="error-overlay"><div class="error-msg">SYSTEM ERROR</div></div>
 
-    <div id="error-overlay">
-        <div class="error-msg">SYSTEM ERROR</div>
-    </div>
-
-    <!-- シャッター要素 -->
+    <!-- シャッター -->
     <div id="shutter-door">
         <div class="system-locked-text">SYSTEM LOCKED</div>
         <div class="shutter-bottom-bar"></div>
     </div>
 
-    <!-- EXIT Button -->
+    <!-- EXIT -->
     <a href="#" class="fixed top-6 left-6 z-[100] neon-btn px-6 py-2" onclick="closeShutterAndExit(); return false;">
         EXIT
     </a>
@@ -236,6 +212,7 @@
     <button class="nav-arrow left" id="btn-prev">&lt;</button>
     <button class="nav-arrow right" id="btn-next">&gt;</button>
 
+    <!-- Main Container -->
     <div class="garage-container screen-glitch" id="scroller">
         
         <!-- LEFT PANEL -->
@@ -263,7 +240,8 @@
                     </p>
                 </div>
                 <div>
-                    <button class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION">
+                    <!-- IGNITION Button with toggle function -->
+                    <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION" onclick="toggleIgnition()">
                         IGNITION
                     </button>
                 </div>
@@ -297,6 +275,69 @@
         const errorOverlay = document.getElementById('error-overlay');
         const randomCode = document.getElementById('random-code');
 
+        // --- AUDIO SETUP ---
+        const ignitionAudio = new Audio('IGNITION.m4a');
+        ignitionAudio.loop = false; // ループなし
+        let isEngineOn = false;     // 再生状態管理
+        let fadeInterval = null;    // フェードアウト用のタイマーID
+
+        // IGNITIONボタンのトグル処理
+        function toggleIgnition() {
+            const btn = document.getElementById('ignition-btn');
+
+            if (!isEngineOn) {
+                // --- 再生開始 (START) ---
+                // フェードアウト中の連打対策: タイマーがあればクリア
+                if (fadeInterval) clearInterval(fadeInterval);
+
+                ignitionAudio.volume = 0.1; // 音量10% (爆音対策)
+                ignitionAudio.currentTime = 0; // 頭出し
+                
+                // 再生
+                ignitionAudio.play().then(() => {
+                    isEngineOn = true;
+                    btn.classList.add('active-engine'); // 演出ON
+                }).catch(e => {
+                    console.log("Audio play error: ", e);
+                    // ブラウザの制限で再生できない場合などのログ
+                });
+
+            } else {
+                // --- 停止 (STOP & FADE OUT) ---
+                fadeOutAudio(btn);
+            }
+        }
+
+        // フェードアウト処理
+        function fadeOutAudio(btn) {
+            if (fadeInterval) clearInterval(fadeInterval);
+
+            // 50msごとに音量を下げていく
+            fadeInterval = setInterval(() => {
+                if (ignitionAudio.volume > 0.005) {
+                    ignitionAudio.volume -= 0.005; // 少しずつ下げる
+                } else {
+                    // 完全に音が消えたら停止
+                    clearInterval(fadeInterval);
+                    ignitionAudio.pause();
+                    ignitionAudio.currentTime = 0;
+                    ignitionAudio.volume = 0.1; // 音量を戻しておく
+                    isEngineOn = false;
+                    btn.classList.remove('active-engine'); // 演出OFF
+                    fadeInterval = null;
+                }
+            }, 30); // 0.6秒程度でフェードアウト
+        }
+
+        // 再生が自然に終了した場合 (1分経過)
+        ignitionAudio.addEventListener('ended', () => {
+            isEngineOn = false;
+            const btn = document.getElementById('ignition-btn');
+            if(btn) btn.classList.remove('active-engine');
+        });
+
+        // --- 以下、既存のUIロジック ---
+
         window.addEventListener('load', () => {
             scroller.scrollTo(window.innerWidth, 0);
         });
@@ -307,6 +348,11 @@
             scroller.scrollBy({ left: window.innerWidth, behavior: 'smooth' }));
 
         function closeShutterAndExit() {
+            // EXIT時は音も止める
+            if (isEngineOn) {
+                ignitionAudio.pause();
+            }
+
             const shutter = document.getElementById('shutter-door');
             shutter.classList.add('closed');
             setTimeout(() => {
