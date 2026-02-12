@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - SHUTTER EXIT</title>
+    <title>FACTORY GARAGE - FINAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -14,32 +14,46 @@
             --neon-pink: #ff0055;
         }
 
-        /* 透過設定: 背景色なし */
+        /* 【重要】背景画像の設定
+           image1.PNG が同じフォルダにあれば、フルスクリーンで表示されます。
+           画像がない場合は、背景は透明（ブラウザのデフォルト色）になります。
+        */
         html, body {
             margin: 0;
             padding: 0;
-            background-color: transparent;
+            width: 100%;
+            height: 100%;
+            
+            /* 背景色を削除し、画像のみを指定 */
+            background-color: transparent; 
+            background-image: url('image1.PNG');
+            
+            /* 画像を画面いっぱいに広げ、中央に配置 */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            
             font-family: 'Black Ops One', cursive;
             overflow: hidden;
             color: var(--neon-cyan);
             -webkit-font-smoothing: antialiased; 
         }
 
-        /* --- シャッター演出 --- */
+        /* --- シャッター演出 (最前面) --- */
         #shutter-door {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #050505; /* ほぼ真っ黒 */
+            background-color: #050505;
             z-index: 9999;
-            transform: translateY(-100%); /* 最初は上に隠れている */
-            transition: transform 0.6s cubic-bezier(0.5, 0, 0.75, 0); /* 重力で落ちるような加速 */
+            transform: translateY(-100%); /* 最初は上に隠す */
+            transition: transform 0.6s cubic-bezier(0.5, 0, 0.75, 0);
             display: flex;
-            align-items: flex-end; /* 下端に装飾 */
+            align-items: flex-end;
             justify-content: center;
-            /* シャッターの質感（横ライン） */
             background-image: repeating-linear-gradient(
                 0deg,
                 transparent,
@@ -48,14 +62,14 @@
                 rgba(0, 0, 0, 1) 42px
             );
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            pointer-events: none;
         }
 
-        /* シャッターが閉まる時のクラス */
         #shutter-door.closed {
             transform: translateY(0%);
+            pointer-events: auto;
         }
 
-        /* シャッター下部の警告ライン */
         .shutter-bottom-bar {
             width: 100%;
             height: 20px;
@@ -71,7 +85,6 @@
             box-shadow: 0 0 15px var(--neon-cyan);
         }
 
-        /* 閉まった時に出る文字 */
         .system-locked-text {
             position: absolute;
             bottom: 50%;
@@ -82,13 +95,13 @@
             text-shadow: -1px -1px 0 #333;
             letter-spacing: 1em;
             opacity: 0;
-            transition: opacity 0.2s 0.6s; /* シャッターが閉まった後に表示 */
+            transition: opacity 0.2s 0.6s;
         }
         #shutter-door.closed .system-locked-text {
             opacity: 1;
         }
 
-        /* --- ノイズ (透過用) --- */
+        /* --- ノイズ --- */
         .noise-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -103,7 +116,7 @@
             100% { background-position: 50px 50px; }
         }
 
-        /* --- 画面の歪み (悪ガキ仕様) --- */
+        /* --- 画面の歪み --- */
         .screen-glitch { animation: none; }
         .screen-glitch.active { animation: glitch-skew 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) both; }
         @keyframes glitch-skew {
@@ -115,7 +128,7 @@
             100% { transform: skewX(0deg); filter: none; }
         }
 
-        /* --- テキストグリッチ (透過対応) --- */
+        /* --- テキストグリッチ --- */
         .glitch-text { position: relative; }
         .glitch-text.active::before, .glitch-text.active::after {
             content: attr(data-text);
@@ -215,7 +228,7 @@
         <div class="shutter-bottom-bar"></div>
     </div>
 
-    <!-- EXIT Button: シャッター関数を呼び出し -->
+    <!-- EXIT Button -->
     <a href="#" class="fixed top-6 left-6 z-[100] neon-btn px-6 py-2" onclick="closeShutterAndExit(); return false;">
         EXIT
     </a>
@@ -293,14 +306,9 @@
         document.getElementById('btn-next').addEventListener('click', () => 
             scroller.scrollBy({ left: window.innerWidth, behavior: 'smooth' }));
 
-        // --- シャッター演出 & 戻る処理 ---
         function closeShutterAndExit() {
             const shutter = document.getElementById('shutter-door');
-            
-            // 1. シャッターを下ろす
             shutter.classList.add('closed');
-            
-            // 2. 下りきったタイミング（0.7秒後）で前のページへ戻る
             setTimeout(() => {
                 if (window.history.length > 1) {
                     window.history.back();
@@ -309,8 +317,6 @@
                 }
             }, 700);
         }
-
-        // --- Mild Glitch Engine ---
 
         const mildDistortion = () => {
             container.classList.add('active');
@@ -346,4 +352,5 @@
     </script>
 </body>
 </html>
+
 
