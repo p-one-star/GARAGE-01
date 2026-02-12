@@ -348,19 +348,18 @@
         setTimeout(titleGlitch, 2000);
         setTimeout(rareError, 10000);
         // --- IGNITION tap sound ---
-const ignitionBtn = document.querySelector('.neon-btn'); // IGNITIONボタン
-const engineSound = document.getElementById('engineSound'); // 362行目のaudio
+        <!-- IGNITION sound -->
+<audio id="engineSound" src="IGNITION.m4a" preload="auto"></audio>
 
-if (ignitionBtn && engineSound) {
-  ignitionBtn.addEventListener('click', () => {
-    engineSound.currentTime = 0;
-engineSound.volume = 0.5;
-engineSound.play().catch(err => console.log('play blocked:', err));
-  });
-}
-    </script>
-    
-    <audio id="engineSound" src="IGNITION.m4a" preload="auto"></audio>
-</body>
-</html>
+<script>
+  const ignitionBtn = document.querySelector('.neon-btn'); // IGNITIONボタン
+  const engineSound = document.getElementById('engineSound');
 
+  if (ignitionBtn && engineSound) {
+    ignitionBtn.addEventListener('click', () => {
+      engineSound.pause();
+      engineSound.currentTime = 0;
+      engineSound.play().catch(err => console.log('play blocked:', err));
+    });
+  }
+</script>
