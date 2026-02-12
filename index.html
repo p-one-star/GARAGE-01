@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - FINAL ON v2</title>
+    <title>FACTORY GARAGE - ONE SHOT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -158,6 +158,17 @@
             box-shadow: 0 0 15px var(--neon-cyan);
             text-shadow: 2px 0 var(--neon-pink), -2px 0 #00ff00;
         }
+        /* ロックされた後のボタン（反応なし） */
+        .neon-btn.locked {
+            opacity: 0.5;
+            cursor: default;
+            pointer-events: none; /* クリック不可にはせず、JSで無視するが念の為 */
+        }
+        .neon-btn.locked:hover {
+            box-shadow: none;
+            background: transparent;
+            text-shadow: 1px 1px 2px black;
+        }
 
         /* エンジン始動中のボタン演出 */
         .neon-btn.active-engine {
@@ -238,7 +249,7 @@
                 </div>
                 <div>
                     <!-- IGNITION Button -->
-                    <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION" onclick="toggleIgnition()">
+                    <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION" onclick="handleClickIgnition()">
                         IGNITION
                     </button>
                 </div>
@@ -272,86 +283,87 @@
         const errorOverlay = document.getElementById('error-overlay');
         const randomCode = document.getElementById('random-code');
 
-        // --- AUDIO SETUP ---
-        // 新しい音源 ON.m4a
+        // --- AUDIO STATE MACHINE ---
         const ignitionAudio = new Audio('ON.m4a');
         ignitionAudio.loop = false;
         
-        let isEngineOn = false;     // エンジン作動中フラグ
-        let fadeTimer = null;       // フェードアウトタイマーID
+        // 状態管理: 'ready' -> 'playing' -> 'fading' -> 'locked'
+        let gameState = 'ready'; 
+        let fadeTimer = null;
 
-        // IGNITIONボタンのトグル処理
-        function toggleIgnition() {
+        function handleClickIgnition() {
             const btn = document.getElementById('ignition-btn');
 
-            if (!isEngineOn) {
-                // === START (1回目) ===
+            if (gameState === 'ready') {
+                // === 1回目クリック: 再生開始 ===
+                gameState = 'playing';
                 
-                // フェードアウト中に押された場合はタイマーを即キャンセルして再始動
-                if (fadeTimer) {
-                    clearInterval(fadeTimer);
-                    fadeTimer = null;
-                }
-
-                // 音量リセット・頭出し
-                ignitionAudio.volume = 1.0; 
+                ignitionAudio.volume = 1.0;
                 ignitionAudio.currentTime = 0;
-                
                 ignitionAudio.play().then(() => {
-                    isEngineOn = true;
-                    btn.classList.add('active-engine'); // UI: ON
+                    btn.classList.add('active-engine'); // 振動・発光ON
                 }).catch(e => {
                     console.log("Play error:", e);
+                    gameState = 'ready'; // エラー時はリトライ可能に戻す
                 });
 
-            } else {
-                // === STOP (2回目: フェードアウト) ===
-                startFadeOut(btn);
-            }
+            } else if (gameState === 'playing') {
+                // === 2回目クリック: 停止(フェードアウト)してロック ===
+                startFadeOutAndLock(btn);
+            } 
+            // 'fading' や 'locked' の状態では何もしない（反応なし）
         }
 
-        // フェードアウト処理
-        function startFadeOut(btn) {
-            // 二重実行防止
-            if (fadeTimer) return;
+        // フェードアウトしてロックする処理
+        function startFadeOutAndLock(btn) {
+            if (gameState === 'fading' || gameState === 'locked') return;
+            gameState = 'fading'; // フェードアウト中へ遷移
 
-            // まずUIをOFFにする
+            // UI演出を停止
             btn.classList.remove('active-engine');
-            // 内部的にもOFFにする（これで次はSTARTに入れる）
-            isEngineOn = false;
-
-            // 徐々に音量を下げる
+            
+            // フェードアウト処理
             fadeTimer = setInterval(() => {
                 if (ignitionAudio.volume > 0.05) {
                     ignitionAudio.volume -= 0.05;
                 } else {
-                    // 完全に止める
-                    stopAudioCompletely();
+                    // 完全に音が消えたら
+                    stopAudioAndLockCompletely();
                 }
             }, 50); 
         }
 
-        // 完全停止処理
-        function stopAudioCompletely() {
+        // 完全停止 & ロック完了処理
+        function stopAudioAndLockCompletely() {
             if (fadeTimer) {
                 clearInterval(fadeTimer);
                 fadeTimer = null;
             }
             ignitionAudio.pause();
             ignitionAudio.currentTime = 0;
-            ignitionAudio.volume = 1.0; // 次回のために戻しておく
-            isEngineOn = false;
+            ignitionAudio.volume = 1.0; // リセット
             
-            const btn = document.getElementById('ignition-btn');
-            if (btn) btn.classList.remove('active-engine');
+            // 状態をロックへ (これ以降クリックしても無反応)
+            gameState = 'locked';
+            
+            // 視覚的にも「あれ？」感を出すために、特にクラス付与せず通常状態に戻ったままにする
+            // 必要なら .locked クラスをつけて少し暗くしてもよいが、今回は「無反応」がテーマなので何もしない
+            // const btn = document.getElementById('ignition-btn');
+            // btn.classList.add('locked'); // 完全に無効化の見た目にしたい場合はコメントアウト外す
         }
 
-        // 最後まで再生された場合の自動リセット
+        // 音声が最後まで再生された場合 (自動停止)
         ignitionAudio.addEventListener('ended', () => {
-            stopAudioCompletely();
+            // 再生中に最後まで行ったらロックする
+            if (gameState === 'playing') {
+                const btn = document.getElementById('ignition-btn');
+                btn.classList.remove('active-engine');
+                stopAudioAndLockCompletely();
+            }
         });
 
-        // --- UI Logic ---
+
+        // --- UI Logic (既存) ---
         window.addEventListener('load', () => {
             scroller.scrollTo(window.innerWidth, 0);
         });
@@ -362,9 +374,11 @@
             scroller.scrollBy({ left: window.innerWidth, behavior: 'smooth' }));
 
         function closeShutterAndExit() {
-            if (isEngineOn || !ignitionAudio.paused) {
-                startFadeOut(document.getElementById('ignition-btn'));
+            // EXIT時は強制フェードアウト
+            if (gameState === 'playing') {
+                startFadeOutAndLock(document.getElementById('ignition-btn'));
             }
+
             const shutter = document.getElementById('shutter-door');
             shutter.classList.add('closed');
             setTimeout(() => {
