@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - IGNITION AUDIO</title>
+    <title>FACTORY GARAGE - FINAL 1.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -20,15 +20,12 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            
             background-color: transparent; 
             background-image: url('image1.PNG');
-            
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            
             font-family: 'Black Ops One', cursive;
             overflow: hidden;
             color: var(--neon-cyan);
@@ -240,7 +237,7 @@
                     </p>
                 </div>
                 <div>
-                    <!-- IGNITION Button with toggle function -->
+                    <!-- IGNITION Button -->
                     <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION" onclick="toggleIgnition()">
                         IGNITION
                     </button>
@@ -276,68 +273,81 @@
         const randomCode = document.getElementById('random-code');
 
         // --- AUDIO SETUP ---
+        // 重要: 音量1% (0.01) スタート
         const ignitionAudio = new Audio('IGNITION.m4a');
-        ignitionAudio.loop = false; // ループなし
-        let isEngineOn = false;     // 再生状態管理
-        let fadeInterval = null;    // フェードアウト用のタイマーID
+        ignitionAudio.loop = false;
+        
+        let isEngineOn = false;     // 再生中フラグ
+        let fadeInterval = null;    // フェードアウト用タイマー
 
         // IGNITIONボタンのトグル処理
         function toggleIgnition() {
             const btn = document.getElementById('ignition-btn');
 
             if (!isEngineOn) {
-                // --- 再生開始 (START) ---
-                // フェードアウト中の連打対策: タイマーがあればクリア
-                if (fadeInterval) clearInterval(fadeInterval);
+                // === 再生開始 (START) ===
+                if (fadeInterval) clearInterval(fadeInterval); // フェードアウト中に押されたらキャンセル
 
-                ignitionAudio.volume = 0.1; // 音量10% (爆音対策)
-                ignitionAudio.currentTime = 0; // 頭出し
+                ignitionAudio.volume = 0.01; // 音量1%で固定
+                ignitionAudio.currentTime = 0;
                 
-                // 再生
+                // 再生試行
                 ignitionAudio.play().then(() => {
                     isEngineOn = true;
                     btn.classList.add('active-engine'); // 演出ON
                 }).catch(e => {
-                    console.log("Audio play error: ", e);
-                    // ブラウザの制限で再生できない場合などのログ
+                    console.log("Play error:", e);
                 });
 
             } else {
-                // --- 停止 (STOP & FADE OUT) ---
-                fadeOutAudio(btn);
+                // === 停止 (FADE OUT) ===
+                // 既に再生中ならフェードアウトへ移行
+                startFadeOut(btn);
             }
         }
 
         // フェードアウト処理
-        function fadeOutAudio(btn) {
-            if (fadeInterval) clearInterval(fadeInterval);
+        function startFadeOut(btn) {
+            // 重複実行防止
+            if (fadeInterval) return;
 
-            // 50msごとに音量を下げていく
+            // ボタンの演出を先に消して「止まる感」を出す
+            btn.classList.remove('active-engine');
+            isEngineOn = false; // フラグは先に下ろして連打を防ぐ
+
+            // 50msごとに音量を少しずつ下げる
             fadeInterval = setInterval(() => {
-                if (ignitionAudio.volume > 0.005) {
-                    ignitionAudio.volume -= 0.005; // 少しずつ下げる
+                // 現在の音量から 0.001 ずつ引く (元が0.01と小さいので細かく)
+                if (ignitionAudio.volume > 0.001) {
+                    ignitionAudio.volume = Math.max(0, ignitionAudio.volume - 0.001);
                 } else {
-                    // 完全に音が消えたら停止
-                    clearInterval(fadeInterval);
-                    ignitionAudio.pause();
-                    ignitionAudio.currentTime = 0;
-                    ignitionAudio.volume = 0.1; // 音量を戻しておく
-                    isEngineOn = false;
-                    btn.classList.remove('active-engine'); // 演出OFF
-                    fadeInterval = null;
+                    // ほぼ0になったら停止
+                    stopAudioCompletely();
                 }
-            }, 30); // 0.6秒程度でフェードアウト
+            }, 50); 
         }
 
-        // 再生が自然に終了した場合 (1分経過)
+        function stopAudioCompletely() {
+            if (fadeInterval) {
+                clearInterval(fadeInterval);
+                fadeInterval = null;
+            }
+            ignitionAudio.pause();
+            ignitionAudio.currentTime = 0;
+            ignitionAudio.volume = 0.01; // 次回のためにリセット
+            isEngineOn = false;
+        }
+
+        // 最後まで再生された場合の処理
         ignitionAudio.addEventListener('ended', () => {
             isEngineOn = false;
             const btn = document.getElementById('ignition-btn');
             if(btn) btn.classList.remove('active-engine');
+            ignitionAudio.volume = 0.01; // 音量リセット
         });
 
-        // --- 以下、既存のUIロジック ---
 
+        // --- UIロジック (維持) ---
         window.addEventListener('load', () => {
             scroller.scrollTo(window.innerWidth, 0);
         });
@@ -348,9 +358,9 @@
             scroller.scrollBy({ left: window.innerWidth, behavior: 'smooth' }));
 
         function closeShutterAndExit() {
-            // EXIT時は音も止める
-            if (isEngineOn) {
-                ignitionAudio.pause();
+            // EXIT時は即座にフェードアウト停止
+            if (isEngineOn || !ignitionAudio.paused) {
+                startFadeOut(document.getElementById('ignition-btn'));
             }
 
             const shutter = document.getElementById('shutter-door');
@@ -359,7 +369,7 @@
                 if (window.history.length > 1) {
                     window.history.back();
                 } else {
-                    console.log("No history to go back to.");
+                    console.log("No history.");
                 }
             }, 700);
         }
