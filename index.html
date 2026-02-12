@@ -354,7 +354,8 @@ const engineSound = document.getElementById('engineSound'); // 362行目のaudio
 if (ignitionBtn && engineSound) {
   ignitionBtn.addEventListener('click', () => {
     engineSound.currentTime = 0;
-    engineSound.play().catch(err => console.log('play blocked:', err));
+engineSound.volume = 0.2;
+engineSound.play().catch(err => console.log('play blocked:', err));
   });
 }
     </script>
