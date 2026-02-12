@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - FINAL ON</title>
+    <title>FACTORY GARAGE - FINAL ON v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -273,73 +273,82 @@
         const randomCode = document.getElementById('random-code');
 
         // --- AUDIO SETUP ---
-        // 新しい音源 ON.m4a を採用
+        // 新しい音源 ON.m4a
         const ignitionAudio = new Audio('ON.m4a');
         ignitionAudio.loop = false;
         
-        let isEngineOn = false;
-        let fadeInterval = null;
+        let isEngineOn = false;     // エンジン作動中フラグ
+        let fadeTimer = null;       // フェードアウトタイマーID
 
-        // IGNITIONボタン処理
+        // IGNITIONボタンのトグル処理
         function toggleIgnition() {
             const btn = document.getElementById('ignition-btn');
 
             if (!isEngineOn) {
-                // === 再生 (START) ===
-                if (fadeInterval) clearInterval(fadeInterval);
+                // === START (1回目) ===
+                
+                // フェードアウト中に押された場合はタイマーを即キャンセルして再始動
+                if (fadeTimer) {
+                    clearInterval(fadeTimer);
+                    fadeTimer = null;
+                }
 
-                // 音量は調整せず原音(1.0)で再生
+                // 音量リセット・頭出し
                 ignitionAudio.volume = 1.0; 
                 ignitionAudio.currentTime = 0;
                 
                 ignitionAudio.play().then(() => {
                     isEngineOn = true;
-                    btn.classList.add('active-engine');
+                    btn.classList.add('active-engine'); // UI: ON
                 }).catch(e => {
                     console.log("Play error:", e);
                 });
 
             } else {
-                // === 停止 (FADE OUT) ===
+                // === STOP (2回目: フェードアウト) ===
                 startFadeOut(btn);
             }
         }
 
-        // フェードアウト処理 (音量1.0から0へ)
+        // フェードアウト処理
         function startFadeOut(btn) {
-            if (fadeInterval) return;
+            // 二重実行防止
+            if (fadeTimer) return;
 
+            // まずUIをOFFにする
             btn.classList.remove('active-engine');
+            // 内部的にもOFFにする（これで次はSTARTに入れる）
             isEngineOn = false;
 
-            // 50msごとに音量を0.05ずつ下げる (約1秒で消える)
-            fadeInterval = setInterval(() => {
+            // 徐々に音量を下げる
+            fadeTimer = setInterval(() => {
                 if (ignitionAudio.volume > 0.05) {
                     ignitionAudio.volume -= 0.05;
                 } else {
+                    // 完全に止める
                     stopAudioCompletely();
                 }
             }, 50); 
         }
 
+        // 完全停止処理
         function stopAudioCompletely() {
-            if (fadeInterval) {
-                clearInterval(fadeInterval);
-                fadeInterval = null;
+            if (fadeTimer) {
+                clearInterval(fadeTimer);
+                fadeTimer = null;
             }
             ignitionAudio.pause();
             ignitionAudio.currentTime = 0;
-            // 次回のためにリセット
-            ignitionAudio.volume = 1.0;
+            ignitionAudio.volume = 1.0; // 次回のために戻しておく
             isEngineOn = false;
+            
+            const btn = document.getElementById('ignition-btn');
+            if (btn) btn.classList.remove('active-engine');
         }
 
-        // 再生終了時
+        // 最後まで再生された場合の自動リセット
         ignitionAudio.addEventListener('ended', () => {
-            isEngineOn = false;
-            const btn = document.getElementById('ignition-btn');
-            if(btn) btn.classList.remove('active-engine');
-            ignitionAudio.volume = 1.0;
+            stopAudioCompletely();
         });
 
         // --- UI Logic ---
