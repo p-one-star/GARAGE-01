@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - ONE SHOT</title>
+    <title>FACTORY GARAGE - IGNITION SEQUENCE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -16,48 +16,64 @@
 
         /* 背景画像設定 */
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
+            margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: transparent; 
             background-image: url('image1.PNG');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            font-family: 'Black Ops One', cursive;
-            overflow: hidden;
-            color: var(--neon-cyan);
-            -webkit-font-smoothing: antialiased; 
+            background-size: cover; background-position: center;
+            background-repeat: no-repeat; background-attachment: fixed;
+            font-family: 'Black Ops One', cursive; overflow: hidden;
+            color: var(--neon-cyan); -webkit-font-smoothing: antialiased; 
         }
 
         /* PCでの強制ズーム設定 */
         @media (min-width: 768px) {
-            html, body {
-                background-size: auto 130vh;
-            }
+            html, body { background-size: auto 130vh; }
+        }
+
+        /* --- 演出用アニメーション --- */
+
+        /* 1. セルモーター時の激しいノイズ */
+        .cranking-noise {
+            animation: cranking-shake 0.05s infinite;
+            filter: contrast(1.5) brightness(0.8) sepia(1); /* 電力が落ちる感じ */
+        }
+        @keyframes cranking-shake {
+            0% { transform: translate(1px, 1px) skewX(0deg); opacity: 0.9; }
+            20% { transform: translate(-3px, 0px) skewX(-5deg); opacity: 0.8; }
+            40% { transform: translate(1px, -1px) skewX(5deg); opacity: 1; }
+            60% { transform: translate(-3px, 1px) skewX(-5deg); opacity: 0.8; }
+            80% { transform: translate(-1px, -1px) skewX(5deg); opacity: 0.9; }
+            100% { transform: translate(1px, 2px) skewX(0deg); opacity: 1; }
+        }
+
+        /* 2. 爆発時の大揺れ (Kick) */
+        .violent-shake {
+            animation: big-kick 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes big-kick {
+            10%, 90% { transform: translate3d(-5px, 0, 0) rotate(-2deg); }
+            20%, 80% { transform: translate3d(10px, 0, 0) rotate(2deg); }
+            30%, 50%, 70% { transform: translate3d(-20px, 0, 0) scale(1.05); filter: blur(2px); }
+            40%, 60% { transform: translate3d(20px, 0, 0) scale(1.05); }
+        }
+
+        /* 通常の画面歪み (悪ガキ仕様・継続) */
+        .screen-glitch.active { animation: glitch-skew 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) both; }
+        @keyframes glitch-skew {
+            0% { transform: skewX(0deg); } 20% { transform: skewX(-2deg); } 40% { transform: skewX(2deg); }
+            60% { transform: skewX(-1deg); filter: hue-rotate(10deg); } 80% { transform: skewX(0.5deg); } 100% { transform: skewX(0deg); filter: none; }
         }
 
         /* --- シャッター演出 --- */
         #shutter-door {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: #050505;
-            z-index: 9999;
-            transform: translateY(-100%);
-            transition: transform 0.6s cubic-bezier(0.5, 0, 0.75, 0);
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #050505; z-index: 9999;
+            transform: translateY(-100%); transition: transform 0.6s cubic-bezier(0.5, 0, 0.75, 0);
             display: flex; align-items: flex-end; justify-content: center;
-            background-image: repeating-linear-gradient(
-                0deg, transparent, transparent 40px, rgba(30, 30, 30, 0.8) 41px, rgba(0, 0, 0, 1) 42px
-            );
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            pointer-events: none;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(30, 30, 30, 0.8) 41px, rgba(0, 0, 0, 1) 42px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); pointer-events: none;
         }
-        #shutter-door.closed {
-            transform: translateY(0%);
-            pointer-events: auto;
-        }
+        #shutter-door.closed { transform: translateY(0%); pointer-events: auto; }
         .shutter-bottom-bar {
             width: 100%; height: 20px;
             background: repeating-linear-gradient(45deg, #000, #000 20px, #333 20px, #333 40px);
@@ -71,54 +87,14 @@
         }
         #shutter-door.closed .system-locked-text { opacity: 1; }
 
-        /* --- ノイズ --- */
+        /* --- ノイズオーバーレイ --- */
         .noise-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             pointer-events: none; z-index: 90; opacity: 0.1;
             background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)"/%3E%3C/svg%3E');
             animation: noise-shift 0.5s infinite steps(2);
         }
-        @keyframes noise-shift {
-            0% { background-position: 0 0; }
-            100% { background-position: 50px 50px; }
-        }
-
-        /* --- グリッチ演出 --- */
-        .screen-glitch { animation: none; }
-        .screen-glitch.active { animation: glitch-skew 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) both; }
-        @keyframes glitch-skew {
-            0% { transform: skewX(0deg); }
-            20% { transform: skewX(-2deg); }
-            40% { transform: skewX(2deg); }
-            60% { transform: skewX(-1deg); filter: hue-rotate(10deg); }
-            80% { transform: skewX(0.5deg); }
-            100% { transform: skewX(0deg); filter: none; }
-        }
-
-        .glitch-text { position: relative; }
-        .glitch-text.active::before, .glitch-text.active::after {
-            content: attr(data-text);
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0.8; background: transparent;
-        }
-        .glitch-text.active::before {
-            color: var(--neon-pink); z-index: -1;
-            animation: glitch-anim-1 0.3s infinite linear alternate-reverse;
-            mix-blend-mode: screen;
-        }
-        .glitch-text.active::after {
-            color: #00ff00; z-index: -2;
-            animation: glitch-anim-2 0.3s infinite linear alternate-reverse;
-            mix-blend-mode: screen;
-        }
-        @keyframes glitch-anim-1 {
-            0% { clip-path: inset(20% 0 80% 0); transform: translate(-4px, 0); }
-            100% { clip-path: inset(60% 0 10% 0); transform: translate(4px, 0); }
-        }
-        @keyframes glitch-anim-2 {
-            0% { clip-path: inset(10% 0 60% 0); transform: translate(4px, 0); }
-            100% { clip-path: inset(80% 0 5% 0); transform: translate(-4px, 0); }
-        }
+        @keyframes noise-shift { 0% { background-position: 0 0; } 100% { background-position: 50px 50px; } }
 
         /* --- UIパーツ --- */
         #error-overlay {
@@ -147,47 +123,28 @@
         }
 
         .neon-btn {
-            background: transparent;
-            border: 2px solid var(--neon-cyan);
-            color: var(--neon-cyan);
-            transition: all 0.2s; cursor: pointer;
-            text-shadow: 1px 1px 2px black;
+            background: transparent; border: 2px solid var(--neon-cyan); color: var(--neon-cyan);
+            transition: all 0.2s; cursor: pointer; text-shadow: 1px 1px 2px black;
         }
         .neon-btn:hover {
-            background: rgba(0, 240, 255, 0.1);
-            box-shadow: 0 0 15px var(--neon-cyan);
+            background: rgba(0, 240, 255, 0.1); box-shadow: 0 0 15px var(--neon-cyan);
             text-shadow: 2px 0 var(--neon-pink), -2px 0 #00ff00;
         }
-        /* ロックされた後のボタン（反応なし） */
-        .neon-btn.locked {
-            opacity: 0.5;
-            cursor: default;
-            pointer-events: none; /* クリック不可にはせず、JSで無視するが念の為 */
-        }
-        .neon-btn.locked:hover {
-            box-shadow: none;
-            background: transparent;
-            text-shadow: 1px 1px 2px black;
-        }
-
-        /* エンジン始動中のボタン演出 */
+        /* ロック後のボタン */
+        .neon-btn.locked { opacity: 0.3; cursor: default; }
+        
+        /* 稼働中のボタン */
         .neon-btn.active-engine {
             background: rgba(0, 240, 255, 0.2);
             box-shadow: 0 0 25px var(--neon-cyan), inset 0 0 10px var(--neon-cyan);
-            color: #fff;
-            animation: engine-pulse 0.1s infinite alternate;
+            color: #fff; animation: engine-pulse 0.1s infinite alternate;
         }
-        @keyframes engine-pulse {
-            from { transform: scale(1); }
-            to { transform: scale(1.02); }
-        }
+        @keyframes engine-pulse { from { transform: scale(1); } to { transform: scale(1.02); } }
         
         .hud-box {
-            border: 2px solid rgba(0, 240, 255, 0.5);
-            background: transparent; padding: 24px;
+            border: 2px solid rgba(0, 240, 255, 0.5); background: transparent; padding: 24px;
             clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-            text-shadow: 1px 1px 2px #000;
-            box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.05);
+            text-shadow: 1px 1px 2px #000; box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.05);
         }
         
         .nav-arrow {
@@ -199,6 +156,9 @@
         .nav-arrow.left { left: 10px; }
         .nav-arrow.right { right: 10px; }
         @media (max-width: 768px) { .nav-arrow { display: none; } }
+
+        /* グリッチコンテナ (全体を揺らすために使用) */
+        #main-wrapper { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
@@ -220,150 +180,169 @@
     <button class="nav-arrow left" id="btn-prev">&lt;</button>
     <button class="nav-arrow right" id="btn-next">&gt;</button>
 
-    <!-- Main Container -->
-    <div class="garage-container screen-glitch" id="scroller">
-        
-        <!-- LEFT PANEL -->
-        <section id="panel-left" class="panel flex items-center justify-center">
-            <div class="relative z-10 hud-box transform -translate-x-5 md:-translate-x-16">
-                <h2 class="text-3xl mb-2 glitch-text" data-text="SEC: A-01">SEC: A-01</h2>
-                <p class="text-xs text-cyan-700 mb-6 tracking-widest">STORAGE UNIT</p>
-                <div class="space-y-2 text-cyan-500 text-xl font-mono">
-                    <p>TOOL: <span class="text-gray-400">NONE</span></p>
-                    <p>FUEL: <span class="text-red-600">EMPTY</span></p>
-                    <p>VISION: <span class="animate-pulse">LOADING...</span></p>
-                </div>
-            </div>
-        </section>
-
-        <!-- CENTER PANEL -->
-        <section id="panel-center" class="panel flex items-center justify-center">
-            <div class="relative z-10 text-center w-full">
-                <div class="mb-12 inline-block relative">
-                    <h1 class="text-7xl md:text-9xl text-white glitch-text" style="text-shadow: 4px 4px 8px #000;" data-text="GARAGE" id="main-title">
-                        GARAGE
-                    </h1>
-                    <p class="mt-2 text-lg tracking-[0.5em] text-cyan-600 opacity-80" style="text-shadow: 1px 1px 2px #000;">
-                        AUTHORIZED PERSONNEL ONLY
-                    </p>
-                </div>
-                <div>
-                    <!-- IGNITION Button -->
-                    <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION" onclick="handleClickIgnition()">
-                        IGNITION
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- RIGHT PANEL -->
-        <section id="panel-right" class="panel flex items-center justify-center">
-            <div class="relative z-10 hud-box transform translate-x-5 md:translate-x-16 text-right">
-                <h2 class="text-3xl mb-2 glitch-text" data-text="STATUS">STATUS</h2>
-                <div class="flex flex-col gap-3 text-right text-sm font-mono text-cyan-400">
-                    <div class="border-b border-cyan-900 pb-1">
-                        NET: <span class="text-cyan-200">ONLINE</span>
-                    </div>
-                    <div class="border-b border-cyan-900 pb-1">
-                        SYNC: <span class="text-cyan-200">STABLE</span>
-                    </div>
-                    <div class="text-xs text-gray-400 mt-2" id="random-code">
-                        0x4F92...OK
+    <!-- ラッパー (全体揺れ用) -->
+    <div id="main-wrapper" class="screen-glitch">
+        <div class="garage-container" id="scroller">
+            
+            <!-- LEFT PANEL -->
+            <section id="panel-left" class="panel flex items-center justify-center">
+                <div class="relative z-10 hud-box transform -translate-x-5 md:-translate-x-16">
+                    <h2 class="text-3xl mb-2 glitch-text" data-text="SEC: A-01">SEC: A-01</h2>
+                    <p class="text-xs text-cyan-700 mb-6 tracking-widest">STORAGE UNIT</p>
+                    <div class="space-y-2 text-cyan-500 text-xl font-mono">
+                        <p>TOOL: <span class="text-gray-400">NONE</span></p>
+                        <p>FUEL: <span class="text-red-600">EMPTY</span></p>
+                        <p>VISION: <span class="animate-pulse">LOADING...</span></p>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
+            <!-- CENTER PANEL -->
+            <section id="panel-center" class="panel flex items-center justify-center">
+                <div class="relative z-10 text-center w-full">
+                    <div class="mb-12 inline-block relative">
+                        <h1 class="text-7xl md:text-9xl text-white glitch-text" style="text-shadow: 4px 4px 8px #000;" data-text="GARAGE" id="main-title">
+                            GARAGE
+                        </h1>
+                        <p class="mt-2 text-lg tracking-[0.5em] text-cyan-600 opacity-80" style="text-shadow: 1px 1px 2px #000;">
+                            AUTHORIZED PERSONNEL ONLY
+                        </p>
+                    </div>
+                    <div>
+                        <!-- IGNITION Button -->
+                        <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION" onclick="handleClickIgnition()">
+                            IGNITION
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL -->
+            <section id="panel-right" class="panel flex items-center justify-center">
+                <div class="relative z-10 hud-box transform translate-x-5 md:translate-x-16 text-right">
+                    <h2 class="text-3xl mb-2 glitch-text" data-text="STATUS">STATUS</h2>
+                    <div class="flex flex-col gap-3 text-right text-sm font-mono text-cyan-400">
+                        <div class="border-b border-cyan-900 pb-1">
+                            NET: <span class="text-cyan-200">ONLINE</span>
+                        </div>
+                        <div class="border-b border-cyan-900 pb-1">
+                            SYNC: <span class="text-cyan-200">STABLE</span>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-2" id="random-code">
+                            0x4F92...OK
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
     </div>
 
     <script>
         const scroller = document.getElementById('scroller');
-        const container = document.querySelector('.screen-glitch');
+        const wrapper = document.getElementById('main-wrapper'); // 画面全体揺れ用
         const titleText = document.getElementById('main-title');
         const errorOverlay = document.getElementById('error-overlay');
         const randomCode = document.getElementById('random-code');
 
-        // --- AUDIO STATE MACHINE ---
+        // --- AUDIO ENGINE ---
         const ignitionAudio = new Audio('ON.m4a');
         ignitionAudio.loop = false;
         
-        // 状態管理: 'ready' -> 'playing' -> 'fading' -> 'locked'
+        // 状態管理: 'ready' (初期) -> 'playing' (再生中) -> 'locked' (終了/停止済み)
         let gameState = 'ready'; 
         let fadeTimer = null;
+        let effectTimers = []; // 演出用のタイマー配列
 
         function handleClickIgnition() {
             const btn = document.getElementById('ignition-btn');
 
             if (gameState === 'ready') {
-                // === 1回目クリック: 再生開始 ===
+                // === 1. START ===
                 gameState = 'playing';
                 
-                ignitionAudio.volume = 1.0;
+                // 再生開始
+                ignitionAudio.volume = 1.0; 
                 ignitionAudio.currentTime = 0;
                 ignitionAudio.play().then(() => {
-                    btn.classList.add('active-engine'); // 振動・発光ON
+                    btn.classList.add('active-engine'); // ボタン振動ON
+                    scheduleEffects(); // 演出スケジュール開始
                 }).catch(e => {
                     console.log("Play error:", e);
-                    gameState = 'ready'; // エラー時はリトライ可能に戻す
+                    gameState = 'ready'; // 再生失敗時はリトライ可に
                 });
 
             } else if (gameState === 'playing') {
-                // === 2回目クリック: 停止(フェードアウト)してロック ===
-                startFadeOutAndLock(btn);
-            } 
-            // 'fading' や 'locked' の状態では何もしない（反応なし）
-        }
-
-        // フェードアウトしてロックする処理
-        function startFadeOutAndLock(btn) {
-            if (gameState === 'fading' || gameState === 'locked') return;
-            gameState = 'fading'; // フェードアウト中へ遷移
-
-            // UI演出を停止
-            btn.classList.remove('active-engine');
-            
-            // フェードアウト処理
-            fadeTimer = setInterval(() => {
-                if (ignitionAudio.volume > 0.05) {
-                    ignitionAudio.volume -= 0.05;
-                } else {
-                    // 完全に音が消えたら
-                    stopAudioAndLockCompletely();
-                }
-            }, 50); 
-        }
-
-        // 完全停止 & ロック完了処理
-        function stopAudioAndLockCompletely() {
-            if (fadeTimer) {
-                clearInterval(fadeTimer);
-                fadeTimer = null;
+                // === 2. KILL SWITCH (即時停止 & ロック) ===
+                performEmergencyStop(btn);
             }
-            ignitionAudio.pause();
-            ignitionAudio.currentTime = 0;
-            ignitionAudio.volume = 1.0; // リセット
-            
-            // 状態をロックへ (これ以降クリックしても無反応)
-            gameState = 'locked';
-            
-            // 視覚的にも「あれ？」感を出すために、特にクラス付与せず通常状態に戻ったままにする
-            // 必要なら .locked クラスをつけて少し暗くしてもよいが、今回は「無反応」がテーマなので何もしない
-            // const btn = document.getElementById('ignition-btn');
-            // btn.classList.add('locked'); // 完全に無効化の見た目にしたい場合はコメントアウト外す
         }
 
-        // 音声が最後まで再生された場合 (自動停止)
+        // 演出の予約 (ミリ秒単位で調整してください)
+        function scheduleEffects() {
+            // 1. セルモーターノイズ (0s 〜 1.0s)
+            document.body.classList.add('cranking-noise');
+            const t1 = setTimeout(() => {
+                document.body.classList.remove('cranking-noise');
+            }, 1000); // 1.0秒で停止
+
+            // 2. 初爆の大揺れ (1.3s)
+            const t2 = setTimeout(() => {
+                wrapper.classList.add('violent-shake');
+                // 揺れが終わったらクラス削除 (CSS animation 0.4s)
+                setTimeout(() => wrapper.classList.remove('violent-shake'), 500);
+            }, 1300);
+
+            // 3. 最後の空ぶかし (59.0s)
+            const t3 = setTimeout(() => {
+                wrapper.classList.add('violent-shake');
+                setTimeout(() => wrapper.classList.remove('violent-shake'), 500);
+            }, 59000);
+
+            // 予約IDを保存（途中停止時にキャンセルするため）
+            effectTimers.push(t1, t2, t3);
+        }
+
+        // 強制停止処理 (2回目クリック or 終了時)
+        function performEmergencyStop(btn) {
+            // ステート更新: ロック
+            gameState = 'locked';
+
+            // 1. 演出タイマーの全キャンセル
+            effectTimers.forEach(id => clearTimeout(id));
+            effectTimers = [];
+
+            // 2. 視覚エフェクトの即時削除
+            btn.classList.remove('active-engine');
+            document.body.classList.remove('cranking-noise');
+            wrapper.classList.remove('violent-shake');
+            btn.classList.add('locked'); // ボタンを暗くする(任意)
+
+            // 3. 音声の急速フェードアウト (0.5秒で消す)
+            if (fadeTimer) clearInterval(fadeTimer);
+            fadeTimer = setInterval(() => {
+                if (ignitionAudio.volume > 0.1) {
+                    ignitionAudio.volume -= 0.1;
+                } else {
+                    // 完全停止
+                    clearInterval(fadeTimer);
+                    ignitionAudio.pause();
+                    ignitionAudio.currentTime = 0;
+                    ignitionAudio.volume = 1.0; // リセット
+                }
+            }, 30);
+        }
+
+        // 音声が最後まで再生された場合 (1分後)
         ignitionAudio.addEventListener('ended', () => {
-            // 再生中に最後まで行ったらロックする
             if (gameState === 'playing') {
                 const btn = document.getElementById('ignition-btn');
-                btn.classList.remove('active-engine');
-                stopAudioAndLockCompletely();
+                performEmergencyStop(btn);
             }
         });
 
 
-        // --- UI Logic (既存) ---
+        // --- 以下、基本UI系 ---
         window.addEventListener('load', () => {
             scroller.scrollTo(window.innerWidth, 0);
         });
@@ -374,11 +353,10 @@
             scroller.scrollBy({ left: window.innerWidth, behavior: 'smooth' }));
 
         function closeShutterAndExit() {
-            // EXIT時は強制フェードアウト
+            // EXIT時は強制停止
             if (gameState === 'playing') {
-                startFadeOutAndLock(document.getElementById('ignition-btn'));
+                performEmergencyStop(document.getElementById('ignition-btn'));
             }
-
             const shutter = document.getElementById('shutter-door');
             shutter.classList.add('closed');
             setTimeout(() => {
@@ -391,8 +369,9 @@
         }
 
         const mildDistortion = () => {
-            container.classList.add('active');
-            setTimeout(() => { container.classList.remove('active'); }, 200);
+            // ロック後は揺らさない等の制御も可能だが、悪ガキ感維持のため継続
+            wrapper.classList.add('active');
+            setTimeout(() => { wrapper.classList.remove('active'); }, 200);
             const nextTime = Math.random() * 10000 + 5000; 
             setTimeout(mildDistortion, nextTime);
         };
