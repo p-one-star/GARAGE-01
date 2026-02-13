@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - FINAL CUT</title>
+    <title>FACTORY GARAGE - FINAL COMPLETE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -261,7 +261,7 @@
                         </p>
                     </div>
                     <div>
-                        <!-- IGNITION Button -->
+                        <!-- IGNITION Button with RPM Gauge (Masked) -->
                         <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION">
                             <!-- マスク用コンテナ -->
                             <div id="rpm-gauge-mask">
@@ -308,6 +308,10 @@
         const mainEngineAudio = new Audio('ON.m4a');
         mainEngineAudio.loop = false;
         
+        // 最後のシャットダウン用BUN音源をグローバルで保持
+        const finalRevAudio = new Audio('BUN.m4a');
+        finalRevAudio.preload = 'auto'; // 事前読み込み
+        
         let engineState = 'ready'; 
         let effectTimers = [];
         let idleInterval = null; 
@@ -343,6 +347,14 @@
         function startEngineSequence() {
             engineState = 'running';
             
+            // iOS対策: 最後の空ぶかし用音源を、ユーザー操作のタイミングで一度触っておく (ミュート再生 -> 停止)
+            finalRevAudio.volume = 0; 
+            finalRevAudio.play().then(() => {
+                finalRevAudio.pause();
+                finalRevAudio.currentTime = 0;
+                finalRevAudio.volume = 1.0; // 本番用に音量戻す
+            }).catch(e => console.log("Preload error:", e));
+
             mainEngineAudio.volume = 1.0; 
             mainEngineAudio.currentTime = 0;
             mainEngineAudio.play().then(() => {
@@ -426,20 +438,16 @@
         function triggerFinalShutdownRev() {
             engineState = 'stopping';
             
-            // アイドリング振動停止
             stopIdleVibration();
             ignitionBtn.classList.remove('active-engine');
 
-            // --- 音源のスイッチング (即時抹殺 & 再生) ---
+            // --- 音源のスイッチング ---
             
-            // 1. メイン音源を即停止
+            // 1. メイン音源を即停止 (カット)
             mainEngineAudio.pause();
             mainEngineAudio.currentTime = 0; 
             
-            // 2. 空ぶかし音源を即再生
-            const finalRevAudio = new Audio('BUN.m4a');
-            finalRevAudio.volume = 1.0;
-            finalRevAudio.currentTime = 0;
+            // 2. 事前準備済みの空ぶかし音源を再生 (確実に鳴るはず)
             finalRevAudio.play().catch(e => console.log("Final rev error:", e));
 
             // --- 視覚演出 ---
@@ -486,7 +494,6 @@
         function scheduleStartEffects() {
             document.body.classList.add('weak-noise');
             
-            // 初爆 (1.0s)
             const t1 = setTimeout(() => {
                 document.body.classList.remove('weak-noise');
                 document.body.classList.add('explosion-effect');
@@ -496,7 +503,6 @@
                 rpmGaugeMask.style.width = '60%'; 
             }, 1000);
 
-            // 初爆終了 (1.5s)
             const t2 = setTimeout(() => {
                 document.body.classList.remove('explosion-effect');
                 wrapper.classList.remove('violent-shake');
@@ -533,6 +539,7 @@
             wrapper.classList.remove('violent-shake');
             
             mainEngineAudio.pause();
+            finalRevAudio.pause();
         }
 
         mainEngineAudio.addEventListener('ended', () => {
