@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - RPM PERFECT</title>
+    <title>FACTORY GARAGE - FINAL FINISH</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -141,37 +141,37 @@
             z-index: 10;
         }
 
-        /* マスク（窓）: widthが変化する部分 */
+        /* マスク（窓） */
         #rpm-gauge-mask {
             position: absolute;
             top: 0; left: 0;
             height: 100%;
             width: 0%; /* 可変 */
-            overflow: hidden; /* 中身のグラデーションをトリミング */
+            overflow: hidden; 
             z-index: 0;
             opacity: 0.8;
         }
 
-        /* グラデーション本体: width 100%固定 */
+        /* グラデーション本体: 配分調整 */
         #rpm-gauge-body {
             position: absolute;
             top: 0; left: 0;
             height: 100%;
-            width: 100%; /* 親ボタンと同じ幅 */
-            /* 0% - 60%: シアン (#00f0ff)
-               60% - 85%: シアン -> 赤
-               85% - 100%: 赤 (#ff0055)
+            width: 100%; 
+            /* 0% - 70%: シアン (#00f0ff) -> アイドリング域を広げて赤を排除
+               70% - 90%: シアン -> 赤
+               90% - 100%: 赤 (#ff0055)
             */
             background: linear-gradient(
                 90deg, 
                 rgba(0, 240, 255, 0.7) 0%, 
-                rgba(0, 240, 255, 0.7) 60%, 
-                rgba(255, 0, 85, 0.9) 85%, 
+                rgba(0, 240, 255, 0.7) 70%, 
+                rgba(255, 0, 85, 0.9) 90%, 
                 rgba(255, 0, 85, 1.0) 100%
             );
         }
 
-        /* アイドリング中の微振動 (JSでmaskのwidthをいじる) */
+        /* アイドリング中の微振動 */
         .idle-vibration #rpm-gauge-mask {
             transition: width 0.1s ease-in-out; 
         }
@@ -302,8 +302,6 @@
         const errorOverlay = document.getElementById('error-overlay');
         const randomCode = document.getElementById('random-code');
         const ignitionBtn = document.getElementById('ignition-btn');
-        
-        // 制御対象はMask
         const rpmGaugeMask = document.getElementById('rpm-gauge-mask');
 
         // --- AUDIO ENGINE ---
@@ -360,7 +358,7 @@
 
         // --- RPM GAUGE LOGIC ---
 
-        // アイドリング振動 (左端エリア: シアンのみ見える)
+        // アイドリング振動
         function startIdleVibration() {
             if (engineState !== 'running') return;
             if (idleInterval) clearInterval(idleInterval);
@@ -368,7 +366,7 @@
             ignitionBtn.classList.add('idle-vibration');
             
             idleInterval = setInterval(() => {
-                // 8%〜15%の間でランダムに揺れる
+                // 8%〜15%の間でランダムに揺れる（シアン領域）
                 const jitter = 8 + Math.random() * 7;
                 rpmGaugeMask.style.width = jitter + '%';
             }, 100); 
@@ -392,7 +390,7 @@
 
             stopIdleVibration();
 
-            // 画面揺れ (即時)
+            // 画面揺れ
             wrapper.classList.remove('violent-shake'); 
             void wrapper.offsetWidth; 
             wrapper.classList.add('violent-shake');
@@ -400,20 +398,17 @@
 
             // === 演出の同期 (0.2秒後) ===
             setTimeout(() => {
-                // A. ゲージ演出開始
-                // 0.2秒かけて一気に伸びる設定 (cubic-bezierで急加速)
+                // A. ゲージ演出
                 rpmGaugeMask.style.transition = 'width 0.2s cubic-bezier(0.1, 0.7, 1.0, 0.1)'; 
                 rpmGaugeMask.style.width = '90%'; // レッドゾーンへ突入
 
-                // B. WARNING発光 (ゲージが右端に到達するタイミングに合わせる)
-                // ゲージ移動開始から0.15秒後 (トータル0.35秒後)
+                // B. WARNING発光
                 setTimeout(() => {
                     ignitionBtn.classList.add('rev-glow');
                 }, 150);
 
-                // C. 回転落ち (さらに0.3秒後 = トータル0.5秒後)
+                // C. 回転落ち
                 setTimeout(() => {
-                    // ゆっくり戻る
                     rpmGaugeMask.style.transition = 'width 0.6s ease-out';
                     rpmGaugeMask.style.width = '12%'; 
                     
@@ -421,12 +416,13 @@
 
                     setTimeout(() => {
                         rpmGaugeMask.style.transition = ''; 
-                        startIdleVibration();
+                        // エンジンが動いていればアイドリング再開
+                        if(engineState === 'running') startIdleVibration();
                     }, 600);
 
                 }, 300); 
 
-            }, 200); // 最初の0.2秒ディレイ
+            }, 200); 
         }
 
         // 始動演出スケジュール
@@ -439,9 +435,8 @@
                 document.body.classList.add('explosion-effect');
                 wrapper.classList.add('violent-shake');
                 
-                // 初爆時ゲージ
                 rpmGaugeMask.style.transition = 'width 0.1s ease-out';
-                rpmGaugeMask.style.width = '60%'; // ここはまだシアン領域ギリギリ
+                rpmGaugeMask.style.width = '60%'; 
             }, 1000);
 
             // 初爆終了 (1.5s)
@@ -449,15 +444,14 @@
                 document.body.classList.remove('explosion-effect');
                 wrapper.classList.remove('violent-shake');
                 
-                // ゲージ戻す
                 rpmGaugeMask.style.transition = 'width 0.5s ease-out';
                 rpmGaugeMask.style.width = '10%';
             }, 1500);
 
-            // 最後の空ぶかし (59.0s)
+            // 3. 最後の強制空ぶかし (59.0s)
             const t3 = setTimeout(() => {
-                wrapper.classList.add('violent-shake');
-                setTimeout(() => wrapper.classList.remove('violent-shake'), 500);
+                // 自動で空ぶかし演出を実行
+                triggerRevving();
             }, 59000);
 
             effectTimers.push(t1, t2, t3);
