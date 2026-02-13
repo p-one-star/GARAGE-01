@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - IGNITION SEQUENCE</title>
+    <title>FACTORY GARAGE - IGNITION SEQUENCE v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -32,21 +32,33 @@
 
         /* --- 演出用アニメーション --- */
 
-        /* 1. セルモーター時の激しいノイズ */
-        .cranking-noise {
-            animation: cranking-shake 0.05s infinite;
-            filter: contrast(1.5) brightness(0.8) sepia(1); /* 電力が落ちる感じ */
+        /* 1. セルモーター用: 弱い電流ノイズ (色は変えない) */
+        .weak-noise {
+            animation: weak-shake 0.04s infinite;
         }
-        @keyframes cranking-shake {
-            0% { transform: translate(1px, 1px) skewX(0deg); opacity: 0.9; }
-            20% { transform: translate(-3px, 0px) skewX(-5deg); opacity: 0.8; }
-            40% { transform: translate(1px, -1px) skewX(5deg); opacity: 1; }
-            60% { transform: translate(-3px, 1px) skewX(-5deg); opacity: 0.8; }
-            80% { transform: translate(-1px, -1px) skewX(5deg); opacity: 0.9; }
-            100% { transform: translate(1px, 2px) skewX(0deg); opacity: 1; }
+        @keyframes weak-shake {
+            0% { transform: translate(0, 0); opacity: 1; }
+            25% { transform: translate(1px, 1px); opacity: 0.95; }
+            50% { transform: translate(-1px, 0); opacity: 1; }
+            75% { transform: translate(0, -1px); opacity: 0.95; }
+            100% { transform: translate(0, 0); opacity: 1; }
         }
 
-        /* 2. 爆発時の大揺れ (Kick) */
+        /* 2. 初爆用: 激しいセピア変色ノイズ (旧セルモーター演出) */
+        .explosion-effect {
+            animation: violent-glitch 0.05s infinite;
+            filter: contrast(2.0) brightness(0.6) sepia(1) hue-rotate(-50deg); /* 爆発っぽい赤黒いセピア */
+        }
+        @keyframes violent-glitch {
+            0% { transform: translate(2px, 2px) skewX(0deg); }
+            20% { transform: translate(-4px, 0px) skewX(-10deg); }
+            40% { transform: translate(2px, -2px) skewX(10deg); }
+            60% { transform: translate(-4px, 2px) skewX(-10deg); }
+            80% { transform: translate(-2px, -2px) skewX(10deg); }
+            100% { transform: translate(2px, 4px) skewX(0deg); }
+        }
+
+        /* 3. 物理的な大揺れ (Kick) */
         .violent-shake {
             animation: big-kick 0.4s cubic-bezier(.36,.07,.19,.97) both;
         }
@@ -240,7 +252,7 @@
 
     <script>
         const scroller = document.getElementById('scroller');
-        const wrapper = document.getElementById('main-wrapper'); // 画面全体揺れ用
+        const wrapper = document.getElementById('main-wrapper'); 
         const titleText = document.getElementById('main-title');
         const errorOverlay = document.getElementById('error-overlay');
         const randomCode = document.getElementById('random-code');
@@ -249,10 +261,9 @@
         const ignitionAudio = new Audio('ON.m4a');
         ignitionAudio.loop = false;
         
-        // 状態管理: 'ready' (初期) -> 'playing' (再生中) -> 'locked' (終了/停止済み)
         let gameState = 'ready'; 
         let fadeTimer = null;
-        let effectTimers = []; // 演出用のタイマー配列
+        let effectTimers = [];
 
         function handleClickIgnition() {
             const btn = document.getElementById('ignition-btn');
@@ -265,33 +276,37 @@
                 ignitionAudio.volume = 1.0; 
                 ignitionAudio.currentTime = 0;
                 ignitionAudio.play().then(() => {
-                    btn.classList.add('active-engine'); // ボタン振動ON
-                    scheduleEffects(); // 演出スケジュール開始
+                    btn.classList.add('active-engine'); 
+                    scheduleEffects(); // 演出開始
                 }).catch(e => {
                     console.log("Play error:", e);
-                    gameState = 'ready'; // 再生失敗時はリトライ可に
+                    gameState = 'ready'; 
                 });
 
             } else if (gameState === 'playing') {
-                // === 2. KILL SWITCH (即時停止 & ロック) ===
+                // === 2. KILL SWITCH ===
                 performEmergencyStop(btn);
             }
         }
 
-        // 演出の予約 (ミリ秒単位で調整してください)
+        // 演出スケジュール
         function scheduleEffects() {
-            // 1. セルモーターノイズ (0s 〜 1.0s)
-            document.body.classList.add('cranking-noise');
+            // 1. セルモーター: 弱い電流ノイズ (0s 〜 1.0s)
+            document.body.classList.add('weak-noise');
             const t1 = setTimeout(() => {
-                document.body.classList.remove('cranking-noise');
-            }, 1000); // 1.0秒で停止
-
-            // 2. 初爆の大揺れ (1.3s)
-            const t2 = setTimeout(() => {
+                document.body.classList.remove('weak-noise');
+                
+                // 2. 初爆: 激しいセピア変色 (1.0s 〜 1.5s)
+                document.body.classList.add('explosion-effect');
+                // 同時に大揺れ
                 wrapper.classList.add('violent-shake');
-                // 揺れが終わったらクラス削除 (CSS animation 0.4s)
-                setTimeout(() => wrapper.classList.remove('violent-shake'), 500);
-            }, 1300);
+            }, 1000);
+
+            // 初爆エフェクトの終了 (1.5s)
+            const t2 = setTimeout(() => {
+                document.body.classList.remove('explosion-effect');
+                wrapper.classList.remove('violent-shake');
+            }, 1500);
 
             // 3. 最後の空ぶかし (59.0s)
             const t3 = setTimeout(() => {
@@ -299,41 +314,38 @@
                 setTimeout(() => wrapper.classList.remove('violent-shake'), 500);
             }, 59000);
 
-            // 予約IDを保存（途中停止時にキャンセルするため）
             effectTimers.push(t1, t2, t3);
         }
 
-        // 強制停止処理 (2回目クリック or 終了時)
+        // 強制停止処理
         function performEmergencyStop(btn) {
-            // ステート更新: ロック
             gameState = 'locked';
 
-            // 1. 演出タイマーの全キャンセル
+            // 演出全キャンセル
             effectTimers.forEach(id => clearTimeout(id));
             effectTimers = [];
 
-            // 2. 視覚エフェクトの即時削除
+            // クラス削除
             btn.classList.remove('active-engine');
-            document.body.classList.remove('cranking-noise');
+            document.body.classList.remove('weak-noise');
+            document.body.classList.remove('explosion-effect');
             wrapper.classList.remove('violent-shake');
-            btn.classList.add('locked'); // ボタンを暗くする(任意)
+            btn.classList.add('locked'); 
 
-            // 3. 音声の急速フェードアウト (0.5秒で消す)
+            // 音声停止（即時フェードアウト）
             if (fadeTimer) clearInterval(fadeTimer);
             fadeTimer = setInterval(() => {
                 if (ignitionAudio.volume > 0.1) {
                     ignitionAudio.volume -= 0.1;
                 } else {
-                    // 完全停止
                     clearInterval(fadeTimer);
                     ignitionAudio.pause();
                     ignitionAudio.currentTime = 0;
-                    ignitionAudio.volume = 1.0; // リセット
+                    ignitionAudio.volume = 1.0; 
                 }
             }, 30);
         }
 
-        // 音声が最後まで再生された場合 (1分後)
         ignitionAudio.addEventListener('ended', () => {
             if (gameState === 'playing') {
                 const btn = document.getElementById('ignition-btn');
@@ -342,7 +354,7 @@
         });
 
 
-        // --- 以下、基本UI系 ---
+        // --- UI Logic ---
         window.addEventListener('load', () => {
             scroller.scrollTo(window.innerWidth, 0);
         });
@@ -353,7 +365,6 @@
             scroller.scrollBy({ left: window.innerWidth, behavior: 'smooth' }));
 
         function closeShutterAndExit() {
-            // EXIT時は強制停止
             if (gameState === 'playing') {
                 performEmergencyStop(document.getElementById('ignition-btn'));
             }
@@ -369,7 +380,6 @@
         }
 
         const mildDistortion = () => {
-            // ロック後は揺らさない等の制御も可能だが、悪ガキ感維持のため継続
             wrapper.classList.add('active');
             setTimeout(() => { wrapper.classList.remove('active'); }, 200);
             const nextTime = Math.random() * 10000 + 5000; 
