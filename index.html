@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - RPM GAUGE</title>
+    <title>FACTORY GARAGE - RPM COLOR FIX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -12,7 +12,6 @@
         :root {
             --neon-cyan: #00f0ff;
             --neon-pink: #ff0055;
-            --gauge-yellow: #ffee00;
         }
 
         /* 背景画像設定 */
@@ -122,14 +121,14 @@
 
         /* --- IGNITIONボタン & RPMゲージ --- */
         .neon-btn {
-            position: relative; /* ゲージ配置用 */
+            position: relative;
             background: transparent;
             border: 2px solid var(--neon-cyan);
             color: var(--neon-cyan);
             transition: border-color 0.2s, box-shadow 0.2s;
             cursor: pointer;
             text-shadow: 1px 1px 2px black;
-            overflow: hidden; /* ゲージのはみ出し防止 */
+            overflow: hidden;
             -webkit-tap-highlight-color: transparent;
         }
         .neon-btn:hover {
@@ -137,33 +136,35 @@
             box-shadow: 0 0 15px var(--neon-cyan);
         }
 
-        /* 文字を前面に出す */
         .neon-btn span {
             position: relative;
             z-index: 10;
         }
 
-        /* RPMゲージ (背景バー) */
+        /* RPMゲージ (背景バー) - グラデーション変更 */
         #rpm-gauge-bar {
             position: absolute;
             top: 0;
             left: 0;
             height: 100%;
-            width: 0%; /* 初期値0 */
+            width: 0%;
+            /* 左端〜50%: シアン (#00f0ff)
+               50%〜90%: グラデーション
+               90%〜100%: 赤 (#ff0055)
+            */
             background: linear-gradient(
                 90deg, 
-                rgba(0, 240, 255, 0.6) 0%, 
-                rgba(255, 238, 0, 0.6) 60%, 
-                rgba(255, 0, 85, 0.8) 100%
+                rgba(0, 240, 255, 0.7) 0%, 
+                rgba(0, 240, 255, 0.7) 50%, 
+                rgba(255, 0, 85, 0.9) 90%, 
+                rgba(255, 0, 85, 1.0) 100%
             );
             z-index: 0;
             opacity: 0.8;
-            /* widthの変更アニメーションはJSで制御 */
         }
 
         /* アイドリング中の微振動アニメーション */
         .idle-vibration #rpm-gauge-bar {
-            /* JSでランダム制御するためCSSアニメーションは補助的 */
             transition: width 0.1s ease-in-out; 
         }
 
@@ -177,7 +178,7 @@
             color: #fff;
         }
         
-        /* 空ぶかし時の赤発光 (0.2s遅れで付与) */
+        /* 空ぶかし時の赤発光 */
         .neon-btn.rev-glow {
             border-color: var(--neon-pink);
             box-shadow: 0 0 40px var(--neon-pink), inset 0 0 20px var(--neon-pink);
@@ -296,7 +297,7 @@
         
         let engineState = 'ready'; 
         let effectTimers = [];
-        let idleInterval = null; // アイドリング振動用
+        let idleInterval = null; 
 
         // --- BUTTON INTERACTION ---
         let pressStartTime = 0;
@@ -344,7 +345,7 @@
 
         // --- RPM GAUGE LOGIC ---
 
-        // アイドリング振動 (不規則なブルブル)
+        // アイドリング振動
         function startIdleVibration() {
             if (engineState !== 'running') return;
             if (idleInterval) clearInterval(idleInterval);
@@ -352,10 +353,10 @@
             ignitionBtn.classList.add('idle-vibration');
             
             idleInterval = setInterval(() => {
-                // 8%〜15%の間でランダムに揺れる
+                // 8%〜15%の間でランダムに揺れる（シアン領域）
                 const jitter = 8 + Math.random() * 7;
                 rpmGauge.style.width = jitter + '%';
-            }, 100); // 0.1秒ごとに変化
+            }, 100); 
         }
 
         // 振動停止
@@ -374,7 +375,6 @@
             revAudio.currentTime = 0; 
             revAudio.play().catch(e => console.log(e));
 
-            // アイドリング振動を一時停止
             stopIdleVibration();
 
             // 画面揺れ (即時)
@@ -386,9 +386,8 @@
             // === 演出の同期 (0.2秒後) ===
             setTimeout(() => {
                 // A. ゲージ演出
-                // 一気に上昇 (CSS transitionを上書き)
                 rpmGauge.style.transition = 'width 0.2s cubic-bezier(0.1, 0.7, 1.0, 0.1)'; 
-                rpmGauge.style.width = '85%'; // 右端手前まで
+                rpmGauge.style.width = '85%'; // 右端手前（赤領域突入）
 
                 // ボタン赤発光
                 ignitionBtn.classList.add('rev-glow');
@@ -397,24 +396,22 @@
                 setTimeout(() => {
                     // ゆっくり戻る
                     rpmGauge.style.transition = 'width 0.6s ease-out';
-                    rpmGauge.style.width = '12%'; // アイドリング位置へ
+                    rpmGauge.style.width = '12%'; 
                     
                     ignitionBtn.classList.remove('rev-glow');
 
-                    // 戻りきったあたりでアイドリング振動再開
                     setTimeout(() => {
-                        rpmGauge.style.transition = ''; // transition設定をクリア(CSS側に戻す)
+                        rpmGauge.style.transition = ''; 
                         startIdleVibration();
                     }, 600);
 
-                }, 300); // 上昇にかかる時間と合わせる
+                }, 300); 
 
             }, 200); // 0.2秒ディレイ
         }
 
         // 始動演出スケジュール
         function scheduleStartEffects() {
-            // セルモーター
             document.body.classList.add('weak-noise');
             
             // 初爆 (1.0s)
@@ -425,7 +422,7 @@
                 
                 // 初爆時もゲージを一瞬跳ね上げる
                 rpmGauge.style.transition = 'width 0.1s ease-out';
-                rpmGauge.style.width = '60%';
+                rpmGauge.style.width = '60%'; // グラデーション領域へ
             }, 1000);
 
             // 初爆終了 (1.5s)
@@ -453,7 +450,7 @@
             
             stopIdleVibration();
             rpmGauge.style.transition = 'width 1s ease-out';
-            rpmGauge.style.width = '0%'; // ゲージ0へ
+            rpmGauge.style.width = '0%'; 
 
             ignitionBtn.classList.remove('active-engine');
             ignitionBtn.classList.add('locked'); 
