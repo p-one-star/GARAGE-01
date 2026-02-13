@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - REV DELAY</title>
+    <title>FACTORY GARAGE - RPM GAUGE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -12,6 +12,7 @@
         :root {
             --neon-cyan: #00f0ff;
             --neon-pink: #ff0055;
+            --gauge-yellow: #ffee00;
         }
 
         /* 背景画像設定 */
@@ -23,9 +24,7 @@
             background-repeat: no-repeat; background-attachment: fixed;
             font-family: 'Black Ops One', cursive; overflow: hidden;
             color: var(--neon-cyan); -webkit-font-smoothing: antialiased; 
-            /* 長押しメニュー禁止 (スマホ用) */
-            -webkit-touch-callout: none;
-            user-select: none;
+            -webkit-touch-callout: none; user-select: none;
         }
 
         /* PCでの強制ズーム設定 */
@@ -34,45 +33,29 @@
         }
 
         /* --- 演出用アニメーション --- */
-
-        /* 1. セルモーター用: 弱い電流ノイズ */
-        .weak-noise {
-            animation: weak-shake 0.04s infinite;
-        }
+        .weak-noise { animation: weak-shake 0.04s infinite; }
         @keyframes weak-shake {
-            0% { transform: translate(0, 0); opacity: 1; }
-            25% { transform: translate(1px, 1px); opacity: 0.95; }
-            50% { transform: translate(-1px, 0); opacity: 1; }
-            75% { transform: translate(0, -1px); opacity: 0.95; }
+            0% { transform: translate(0, 0); opacity: 1; } 25% { transform: translate(1px, 1px); opacity: 0.95; }
+            50% { transform: translate(-1px, 0); opacity: 1; } 75% { transform: translate(0, -1px); opacity: 0.95; }
             100% { transform: translate(0, 0); opacity: 1; }
         }
 
-        /* 2. 初爆用: 激しいセピア変色ノイズ */
         .explosion-effect {
             animation: violent-glitch 0.05s infinite;
             filter: contrast(2.0) brightness(0.6) sepia(1) hue-rotate(-50deg);
         }
         @keyframes violent-glitch {
-            0% { transform: translate(2px, 2px) skewX(0deg); }
-            20% { transform: translate(-4px, 0px) skewX(-10deg); }
-            40% { transform: translate(2px, -2px) skewX(10deg); }
-            60% { transform: translate(-4px, 2px) skewX(-10deg); }
-            80% { transform: translate(-2px, -2px) skewX(10deg); }
-            100% { transform: translate(2px, 4px) skewX(0deg); }
+            0% { transform: translate(2px, 2px) skewX(0deg); } 20% { transform: translate(-4px, 0px) skewX(-10deg); }
+            40% { transform: translate(2px, -2px) skewX(10deg); } 60% { transform: translate(-4px, 2px) skewX(-10deg); }
+            80% { transform: translate(-2px, -2px) skewX(10deg); } 100% { transform: translate(2px, 4px) skewX(0deg); }
         }
 
-        /* 3. 物理的な大揺れ (Kick & Rev) */
-        .violent-shake {
-            animation: big-kick 0.3s cubic-bezier(.36,.07,.19,.97) both;
-        }
+        .violent-shake { animation: big-kick 0.3s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes big-kick {
-            10%, 90% { transform: translate3d(-3px, 0, 0) rotate(-1deg); }
-            20%, 80% { transform: translate3d(5px, 0, 0) rotate(1deg); }
-            30%, 50%, 70% { transform: translate3d(-8px, 0, 0) scale(1.02); }
-            40%, 60% { transform: translate3d(8px, 0, 0) scale(1.02); }
+            10%, 90% { transform: translate3d(-3px, 0, 0) rotate(-1deg); } 20%, 80% { transform: translate3d(5px, 0, 0) rotate(1deg); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0) scale(1.02); } 40%, 60% { transform: translate3d(8px, 0, 0) scale(1.02); }
         }
 
-        /* 通常の画面歪み (悪ガキ仕様) */
         .screen-glitch.active { animation: glitch-skew 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) both; }
         @keyframes glitch-skew {
             0% { transform: skewX(0deg); } 20% { transform: skewX(-2deg); } 40% { transform: skewX(2deg); }
@@ -137,29 +120,68 @@
             position: relative; background: transparent; border: none;
         }
 
+        /* --- IGNITIONボタン & RPMゲージ --- */
         .neon-btn {
-            background: transparent; border: 2px solid var(--neon-cyan); color: var(--neon-cyan);
-            transition: all 0.2s; cursor: pointer; text-shadow: 1px 1px 2px black;
+            position: relative; /* ゲージ配置用 */
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-shadow: 1px 1px 2px black;
+            overflow: hidden; /* ゲージのはみ出し防止 */
             -webkit-tap-highlight-color: transparent;
         }
         .neon-btn:hover {
-            background: rgba(0, 240, 255, 0.1); box-shadow: 0 0 15px var(--neon-cyan);
-            text-shadow: 2px 0 var(--neon-pink), -2px 0 #00ff00;
+            background: rgba(0, 240, 255, 0.1);
+            box-shadow: 0 0 15px var(--neon-cyan);
         }
+
+        /* 文字を前面に出す */
+        .neon-btn span {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* RPMゲージ (背景バー) */
+        #rpm-gauge-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%; /* 初期値0 */
+            background: linear-gradient(
+                90deg, 
+                rgba(0, 240, 255, 0.6) 0%, 
+                rgba(255, 238, 0, 0.6) 60%, 
+                rgba(255, 0, 85, 0.8) 100%
+            );
+            z-index: 0;
+            opacity: 0.8;
+            /* widthの変更アニメーションはJSで制御 */
+        }
+
+        /* アイドリング中の微振動アニメーション */
+        .idle-vibration #rpm-gauge-bar {
+            /* JSでランダム制御するためCSSアニメーションは補助的 */
+            transition: width 0.1s ease-in-out; 
+        }
+
+        /* ロック後のボタン */
+        .neon-btn.locked { opacity: 0.3; cursor: default; }
         
-        /* 稼働中のボタン (アイドリング中) */
+        /* 稼働中(アイドリング)のボタン全体 */
         .neon-btn.active-engine {
-            background: rgba(0, 240, 255, 0.2);
-            box-shadow: 0 0 25px var(--neon-cyan), inset 0 0 10px var(--neon-cyan);
-            color: #fff; animation: engine-pulse 0.1s infinite alternate;
+            border-color: #fff;
+            box-shadow: 0 0 15px var(--neon-cyan);
+            color: #fff;
         }
-        @keyframes engine-pulse { from { transform: scale(1); } to { transform: scale(1.02); } }
         
-        /* 空ぶかし時のボタン反応 */
-        .neon-btn.revving {
-            background: rgba(255, 0, 85, 0.4) !important;
-            box-shadow: 0 0 30px var(--neon-pink) !important;
-            transform: scale(0.95);
+        /* 空ぶかし時の赤発光 (0.2s遅れで付与) */
+        .neon-btn.rev-glow {
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 40px var(--neon-pink), inset 0 0 20px var(--neon-pink);
+            color: #fff;
         }
 
         .hud-box {
@@ -178,7 +200,6 @@
         .nav-arrow.right { right: 10px; }
         @media (max-width: 768px) { .nav-arrow { display: none; } }
 
-        /* グリッチコンテナ */
         #main-wrapper { width: 100%; height: 100%; }
     </style>
 </head>
@@ -195,13 +216,13 @@
 
     <!-- EXIT -->
     <a href="#" class="fixed top-6 left-6 z-[100] neon-btn px-6 py-2" onclick="closeShutterAndExit(); return false;">
-        EXIT
+        <span class="relative z-10">EXIT</span>
     </a>
 
     <button class="nav-arrow left" id="btn-prev">&lt;</button>
     <button class="nav-arrow right" id="btn-next">&gt;</button>
 
-    <!-- ラッパー (全体揺れ用) -->
+    <!-- ラッパー -->
     <div id="main-wrapper" class="screen-glitch">
         <div class="garage-container" id="scroller">
             
@@ -230,9 +251,10 @@
                         </p>
                     </div>
                     <div>
-                        <!-- IGNITION Button -->
+                        <!-- IGNITION Button with RPM Gauge -->
                         <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION">
-                            IGNITION
+                            <div id="rpm-gauge-bar"></div>
+                            <span>IGNITION</span>
                         </button>
                     </div>
                 </div>
@@ -266,6 +288,7 @@
         const errorOverlay = document.getElementById('error-overlay');
         const randomCode = document.getElementById('random-code');
         const ignitionBtn = document.getElementById('ignition-btn');
+        const rpmGauge = document.getElementById('rpm-gauge-bar');
 
         // --- AUDIO ENGINE ---
         const mainEngineAudio = new Audio('ON.m4a');
@@ -273,23 +296,17 @@
         
         let engineState = 'ready'; 
         let effectTimers = [];
+        let idleInterval = null; // アイドリング振動用
 
-        // --- BUTTON INTERACTION LOGIC ---
+        // --- BUTTON INTERACTION ---
         let pressStartTime = 0;
-        const LONG_PRESS_THRESHOLD = 300; // ms
+        const LONG_PRESS_THRESHOLD = 300; 
 
-        const handlePressStart = (e) => {
-            pressStartTime = Date.now();
-        };
-
+        const handlePressStart = (e) => { pressStartTime = Date.now(); };
         const handlePressEnd = (e) => {
             if (e.type === 'touchend') e.preventDefault(); 
-
             const pressDuration = Date.now() - pressStartTime;
-            if (pressDuration > LONG_PRESS_THRESHOLD) {
-                console.log("Long press ignored");
-                return;
-            }
+            if (pressDuration > LONG_PRESS_THRESHOLD) return;
             handleTapAction();
         };
 
@@ -317,49 +334,111 @@
             mainEngineAudio.play().then(() => {
                 ignitionBtn.classList.add('active-engine'); 
                 scheduleStartEffects(); 
+                // アイドリング振動開始 (1.5秒後から)
+                setTimeout(startIdleVibration, 1500);
             }).catch(e => {
                 console.log("Play error:", e);
                 engineState = 'ready'; 
             });
         }
 
+        // --- RPM GAUGE LOGIC ---
+
+        // アイドリング振動 (不規則なブルブル)
+        function startIdleVibration() {
+            if (engineState !== 'running') return;
+            if (idleInterval) clearInterval(idleInterval);
+
+            ignitionBtn.classList.add('idle-vibration');
+            
+            idleInterval = setInterval(() => {
+                // 8%〜15%の間でランダムに揺れる
+                const jitter = 8 + Math.random() * 7;
+                rpmGauge.style.width = jitter + '%';
+            }, 100); // 0.1秒ごとに変化
+        }
+
+        // 振動停止
+        function stopIdleVibration() {
+            if (idleInterval) {
+                clearInterval(idleInterval);
+                idleInterval = null;
+            }
+            ignitionBtn.classList.remove('idle-vibration');
+        }
+
         // 2. 空ぶかし (Revving)
         function triggerRevving() {
             const revAudio = new Audio('BUN.m4a');
             revAudio.volume = 1.0;
-            revAudio.currentTime = 0; // 頭から再生
+            revAudio.currentTime = 0; 
             revAudio.play().catch(e => console.log(e));
 
-            // 視覚演出: 画面揺れ (タップと同時に揺らす)
+            // アイドリング振動を一時停止
+            stopIdleVibration();
+
+            // 画面揺れ (即時)
             wrapper.classList.remove('violent-shake'); 
             void wrapper.offsetWidth; 
             wrapper.classList.add('violent-shake');
             setTimeout(() => wrapper.classList.remove('violent-shake'), 300);
 
-            // ボタン演出: 0.3秒遅延 (音のピークに合わせる)
+            // === 演出の同期 (0.2秒後) ===
             setTimeout(() => {
-                ignitionBtn.classList.add('revving');
-                setTimeout(() => ignitionBtn.classList.remove('revving'), 150);
-            }, 300);
+                // A. ゲージ演出
+                // 一気に上昇 (CSS transitionを上書き)
+                rpmGauge.style.transition = 'width 0.2s cubic-bezier(0.1, 0.7, 1.0, 0.1)'; 
+                rpmGauge.style.width = '85%'; // 右端手前まで
+
+                // ボタン赤発光
+                ignitionBtn.classList.add('rev-glow');
+
+                // B. 回転落ち (さらに0.3秒後)
+                setTimeout(() => {
+                    // ゆっくり戻る
+                    rpmGauge.style.transition = 'width 0.6s ease-out';
+                    rpmGauge.style.width = '12%'; // アイドリング位置へ
+                    
+                    ignitionBtn.classList.remove('rev-glow');
+
+                    // 戻りきったあたりでアイドリング振動再開
+                    setTimeout(() => {
+                        rpmGauge.style.transition = ''; // transition設定をクリア(CSS側に戻す)
+                        startIdleVibration();
+                    }, 600);
+
+                }, 300); // 上昇にかかる時間と合わせる
+
+            }, 200); // 0.2秒ディレイ
         }
 
         // 始動演出スケジュール
         function scheduleStartEffects() {
-            // 1. セルモーター (0s - 1.0s)
+            // セルモーター
             document.body.classList.add('weak-noise');
+            
+            // 初爆 (1.0s)
             const t1 = setTimeout(() => {
                 document.body.classList.remove('weak-noise');
-                // 2. 初爆 (1.0s - 1.5s)
                 document.body.classList.add('explosion-effect');
                 wrapper.classList.add('violent-shake');
+                
+                // 初爆時もゲージを一瞬跳ね上げる
+                rpmGauge.style.transition = 'width 0.1s ease-out';
+                rpmGauge.style.width = '60%';
             }, 1000);
 
+            // 初爆終了 (1.5s)
             const t2 = setTimeout(() => {
                 document.body.classList.remove('explosion-effect');
                 wrapper.classList.remove('violent-shake');
+                
+                // ゲージ戻す
+                rpmGauge.style.transition = 'width 0.5s ease-out';
+                rpmGauge.style.width = '10%';
             }, 1500);
 
-            // 3. 最後の空ぶかし (59.0s)
+            // 最後の空ぶかし (59.0s)
             const t3 = setTimeout(() => {
                 wrapper.classList.add('violent-shake');
                 setTimeout(() => wrapper.classList.remove('violent-shake'), 500);
@@ -371,6 +450,11 @@
         // エンジン完全停止
         function stopEngineCompletely() {
             engineState = 'stopped';
+            
+            stopIdleVibration();
+            rpmGauge.style.transition = 'width 1s ease-out';
+            rpmGauge.style.width = '0%'; // ゲージ0へ
+
             ignitionBtn.classList.remove('active-engine');
             ignitionBtn.classList.add('locked'); 
 
