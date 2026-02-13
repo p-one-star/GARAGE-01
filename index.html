@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - FINAL COMPLETE</title>
+    <title>FACTORY GARAGE - WARNING MARK</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+    <!-- Fonts: Black Ops One (UI用) / Rubik Wet Paint (シャッター落書き用) -->
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rubik+Wet+Paint&display=swap" rel="stylesheet">
     
     <style>
         /* --- 基本設定 --- */
         :root {
             --neon-cyan: #00f0ff;
             --neon-pink: #ff0055;
+            --dark-red: #8a0000;
+            --blood-red: #cc0000;
         }
 
         /* 背景画像設定 */
@@ -61,28 +64,76 @@
             60% { transform: skewX(-1deg); filter: hue-rotate(10deg); } 80% { transform: skewX(0.5deg); } 100% { transform: skewX(0deg); filter: none; }
         }
 
-        /* --- シャッター演出 --- */
+        /* --- シャッター演出 (漆黒Ver) --- */
         #shutter-door {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: #050505; z-index: 9999;
-            transform: translateY(-100%); transition: transform 0.6s cubic-bezier(0.5, 0, 0.75, 0);
-            display: flex; align-items: flex-end; justify-content: center;
-            background-image: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(30, 30, 30, 0.8) 41px, rgba(0, 0, 0, 1) 42px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); pointer-events: none;
+            background-color: #000000; 
+            z-index: 9999;
+            transform: translateY(-100%); 
+            transition: transform 1.6s cubic-bezier(0.6, -0.05, 0.7, 0.5);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            
+            background-image: repeating-linear-gradient(
+                180deg,
+                #000000 0px,
+                #000000 40px,
+                #111111 41px,
+                #000000 42px
+            );
+            box-shadow: 0 10px 50px rgba(0,0,0,1); 
+            pointer-events: none;
         }
         #shutter-door.closed { transform: translateY(0%); pointer-events: auto; }
+        
+        /* 下部バー */
         .shutter-bottom-bar {
+            position: absolute; bottom: 0; left: 0;
             width: 100%; height: 20px;
-            background: repeating-linear-gradient(45deg, #000, #000 20px, #333 20px, #333 40px);
-            border-top: 2px solid #333; border-bottom: 2px solid var(--neon-cyan);
-            box-shadow: 0 0 15px var(--neon-cyan);
+            background: #0a0a0a;
+            border-top: 1px solid #222;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 1);
         }
-        .system-locked-text {
-            position: absolute; bottom: 50%; width: 100%; text-align: center;
-            font-size: 5vw; color: #1a1a1a; text-shadow: -1px -1px 0 #333;
-            letter-spacing: 1em; opacity: 0; transition: opacity 0.2s 0.6s;
+
+        /* 警告コンテンツコンテナ */
+        .shutter-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s 0.8s; 
+            transform: rotate(-3deg);
+            gap: 1vh; /* マークと文字の間隔 */
         }
-        #shutter-door.closed .system-locked-text { opacity: 1; }
+        #shutter-door.closed .shutter-content { opacity: 1; }
+
+        /* 警告マーク (SVG) */
+        .warning-icon {
+            width: 15vw;
+            height: 15vw;
+            color: var(--blood-red);
+            /* スプレーの滲みと影 */
+            filter: drop-shadow(0 0 5px rgba(138, 0, 0, 0.8)) drop-shadow(2px 2px 0px #000);
+            
+            /* ノイズテクスチャでザラザラ感を出す */
+            -webkit-mask-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)" opacity="0.9"/%3E%3C/svg%3E');
+        }
+
+        /* グラフィティ風警告文字 */
+        .graffiti-text {
+            font-family: 'Rubik Wet Paint', cursive;
+            font-size: 14vw;
+            color: var(--blood-red);
+            line-height: 0.85;
+            text-align: center;
+            
+            text-shadow: 
+                0 0 10px rgba(138, 0, 0, 0.8),
+                2px 2px 0px #000,
+                4px 10px 20px rgba(0,0,0,0.9);
+            
+            -webkit-mask-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="3"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)" opacity="0.95"/%3E%3C/svg%3E');
+        }
 
         /* --- ノイズオーバーレイ --- */
         .noise-overlay {
@@ -158,10 +209,6 @@
             top: 0; left: 0;
             height: 100%;
             width: 100%; 
-            /* 0% - 70%: シアン (#00f0ff) -> アイドリング域
-               70% - 90%: シアン -> 赤
-               90% - 100%: 赤 (#ff0055)
-            */
             background: linear-gradient(
                 90deg, 
                 rgba(0, 240, 255, 0.7) 0%, 
@@ -220,7 +267,18 @@
 
     <!-- シャッター -->
     <div id="shutter-door">
-        <div class="system-locked-text">SYSTEM LOCKED</div>
+        <div class="shutter-content">
+            <!-- 警告マーク (SVG) -->
+            <svg class="warning-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2v-2zm0-6h2v4h-2v-4z"/>
+            </svg>
+            <!-- 警告テキスト -->
+            <div class="graffiti-text">
+                RESTRICTED<br>AREA
+            </div>
+        </div>
+        
+        <!-- シンプルな下部バー -->
         <div class="shutter-bottom-bar"></div>
     </div>
 
@@ -261,7 +319,7 @@
                         </p>
                     </div>
                     <div>
-                        <!-- IGNITION Button with RPM Gauge (Masked) -->
+                        <!-- IGNITION Button -->
                         <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION">
                             <!-- マスク用コンテナ -->
                             <div id="rpm-gauge-mask">
@@ -308,9 +366,8 @@
         const mainEngineAudio = new Audio('ON.m4a');
         mainEngineAudio.loop = false;
         
-        // 最後のシャットダウン用BUN音源をグローバルで保持
         const finalRevAudio = new Audio('BUN.m4a');
-        finalRevAudio.preload = 'auto'; // 事前読み込み
+        finalRevAudio.preload = 'auto'; 
         
         let engineState = 'ready'; 
         let effectTimers = [];
@@ -347,12 +404,11 @@
         function startEngineSequence() {
             engineState = 'running';
             
-            // iOS対策: 最後の空ぶかし用音源を、ユーザー操作のタイミングで一度触っておく (ミュート再生 -> 停止)
             finalRevAudio.volume = 0; 
             finalRevAudio.play().then(() => {
                 finalRevAudio.pause();
                 finalRevAudio.currentTime = 0;
-                finalRevAudio.volume = 1.0; // 本番用に音量戻す
+                finalRevAudio.volume = 1.0; 
             }).catch(e => console.log("Preload error:", e));
 
             mainEngineAudio.volume = 1.0; 
@@ -360,7 +416,6 @@
             mainEngineAudio.play().then(() => {
                 ignitionBtn.classList.add('active-engine'); 
                 scheduleStartEffects(); 
-                // アイドリング振動開始 (1.5秒後から)
                 setTimeout(startIdleVibration, 1500);
             }).catch(e => {
                 console.log("Play error:", e);
@@ -370,7 +425,6 @@
 
         // --- RPM GAUGE LOGIC ---
 
-        // アイドリング振動
         function startIdleVibration() {
             if (engineState !== 'running') return;
             if (idleInterval) clearInterval(idleInterval);
@@ -400,24 +454,19 @@
 
             stopIdleVibration();
 
-            // 画面揺れ
             wrapper.classList.remove('violent-shake'); 
             void wrapper.offsetWidth; 
             wrapper.classList.add('violent-shake');
             setTimeout(() => wrapper.classList.remove('violent-shake'), 300);
 
-            // === 演出の同期 (0.2秒後) ===
             setTimeout(() => {
-                // ゲージ演出
                 rpmGaugeMask.style.transition = 'width 0.2s cubic-bezier(0.1, 0.7, 1.0, 0.1)'; 
                 rpmGaugeMask.style.width = '90%'; 
 
-                // WARNING発光
                 setTimeout(() => {
                     ignitionBtn.classList.add('rev-glow');
                 }, 150);
 
-                // 回転落ち
                 setTimeout(() => {
                     rpmGaugeMask.style.transition = 'width 0.6s ease-out';
                     rpmGaugeMask.style.width = '12%'; 
@@ -434,44 +483,32 @@
             }, 200); 
         }
 
-        // 3. 終了専用の強制空ぶかし (Final Shutdown Rev)
+        // 3. 終了専用の強制空ぶかし
         function triggerFinalShutdownRev() {
             engineState = 'stopping';
             
             stopIdleVibration();
             ignitionBtn.classList.remove('active-engine');
 
-            // --- 音源のスイッチング ---
-            
-            // 1. メイン音源を即停止 (カット)
             mainEngineAudio.pause();
             mainEngineAudio.currentTime = 0; 
             
-            // 2. 事前準備済みの空ぶかし音源を再生 (確実に鳴るはず)
             finalRevAudio.play().catch(e => console.log("Final rev error:", e));
 
-            // --- 視覚演出 ---
-
-            // 画面揺れ
             wrapper.classList.remove('violent-shake');
             void wrapper.offsetWidth;
             wrapper.classList.add('violent-shake');
             setTimeout(() => wrapper.classList.remove('violent-shake'), 300);
 
-            // 0.2秒後: ゲージ跳ね上げ
             setTimeout(() => {
-                // A. ゲージMAXへ
                 rpmGaugeMask.style.transition = 'width 0.2s cubic-bezier(0.1, 0.7, 1.0, 0.1)';
                 rpmGaugeMask.style.width = '90%';
 
-                // B. WARNING発光
                 setTimeout(() => {
                     ignitionBtn.classList.add('rev-glow');
                 }, 150);
 
-                // C. シャットダウンフェーズ (さらに0.3秒後)
                 setTimeout(() => {
-                    // ゲージを0まで落とす
                     rpmGaugeMask.style.transition = 'width 1.5s ease-out';
                     rpmGaugeMask.style.width = '0%';
 
@@ -511,7 +548,6 @@
                 rpmGaugeMask.style.width = '10%';
             }, 1500);
 
-            // 最後の強制空ぶかし (54.0s に変更)
             const t3 = setTimeout(() => {
                 triggerFinalShutdownRev();
             }, 54000);
@@ -519,7 +555,7 @@
             effectTimers.push(t1, t2, t3);
         }
 
-        // 強制停止 (EXIT時など)
+        // 強制停止
         function stopEngineCompletely() {
             engineState = 'locked';
             
@@ -567,7 +603,7 @@
                 } else {
                     console.log("No history.");
                 }
-            }, 700);
+            }, 2000);
         }
 
         const mildDistortion = () => {
