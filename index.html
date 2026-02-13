@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - REVVING</title>
+    <title>FACTORY GARAGE - INSTANT REV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -140,7 +140,6 @@
         .neon-btn {
             background: transparent; border: 2px solid var(--neon-cyan); color: var(--neon-cyan);
             transition: all 0.2s; cursor: pointer; text-shadow: 1px 1px 2px black;
-            /* タップ時のハイライト削除 */
             -webkit-tap-highlight-color: transparent;
         }
         .neon-btn:hover {
@@ -179,7 +178,7 @@
         .nav-arrow.right { right: 10px; }
         @media (max-width: 768px) { .nav-arrow { display: none; } }
 
-        /* グリッチコンテナ (全体を揺らすために使用) */
+        /* グリッチコンテナ */
         #main-wrapper { width: 100%; height: 100%; }
     </style>
 </head>
@@ -231,7 +230,7 @@
                         </p>
                     </div>
                     <div>
-                        <!-- IGNITION Button (イベントリスナーはJSで設定) -->
+                        <!-- IGNITION Button -->
                         <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION">
                             IGNITION
                         </button>
@@ -272,37 +271,30 @@
         const mainEngineAudio = new Audio('ON.m4a');
         mainEngineAudio.loop = false;
         
-        // 状態: 'ready' (初期) -> 'running' (始動中/アイドリング) -> 'stopped' (終了)
         let engineState = 'ready'; 
         let effectTimers = [];
 
         // --- BUTTON INTERACTION LOGIC ---
-        // 長押し除外判定用
         let pressStartTime = 0;
         const LONG_PRESS_THRESHOLD = 300; // ms
 
-        // マウス/タッチ開始時間記録
-        const handlePressStart = () => {
+        const handlePressStart = (e) => {
+            // PCのマウス操作などでドラッグ暴発を防ぐ
+            // e.preventDefault(); // ここでpreventDefaultするとクリックイベントが飛ばなくなる場合があるため注意
             pressStartTime = Date.now();
         };
 
-        // マウス/タッチ終了時 (実行判定)
         const handlePressEnd = (e) => {
-            if (e.type === 'touchend') e.preventDefault(); // スマホでの二重発火防止
+            if (e.type === 'touchend') e.preventDefault(); 
 
             const pressDuration = Date.now() - pressStartTime;
-
-            // 長押しなら無視 (将来のレブ用)
             if (pressDuration > LONG_PRESS_THRESHOLD) {
-                console.log("Long press ignored (Reserved for Limiter)");
+                console.log("Long press ignored");
                 return;
             }
-
-            // 短押し(タップ)の場合
             handleTapAction();
         };
 
-        // イベントリスナー登録
         ignitionBtn.addEventListener('mousedown', handlePressStart);
         ignitionBtn.addEventListener('touchstart', handlePressStart);
         ignitionBtn.addEventListener('mouseup', handlePressEnd);
@@ -311,20 +303,17 @@
 
         // --- ACTION HANDLER ---
         function handleTapAction() {
-            // 状態に応じた処理
             if (engineState === 'ready') {
                 startEngineSequence();
             } else if (engineState === 'running') {
                 triggerRevving();
             }
-            // stopped の時は何もしない
         }
 
-        // 1. エンジン始動シーケンス
+        // 1. エンジン始動
         function startEngineSequence() {
             engineState = 'running';
             
-            // 音声再生
             mainEngineAudio.volume = 1.0; 
             mainEngineAudio.currentTime = 0;
             mainEngineAudio.play().then(() => {
@@ -332,47 +321,48 @@
                 scheduleStartEffects(); 
             }).catch(e => {
                 console.log("Play error:", e);
-                engineState = 'ready'; // 失敗時は戻す
+                engineState = 'ready'; 
             });
         }
 
         // 2. 空ぶかし (Revving)
         function triggerRevving() {
-            // 空ぶかし音源 (重ね掛け用に都度生成)
             const revAudio = new Audio('BUN.m4a');
             revAudio.volume = 1.0;
+            
+            // 【変更点】再生開始位置を0.3秒に進めてラグを解消
+            revAudio.currentTime = 0.3; 
+            
             revAudio.play().catch(e => console.log(e));
 
-            // 視覚演出: 画面揺れ + ボタン点滅
-            wrapper.classList.remove('violent-shake'); // アニメーションリセット用
-            void wrapper.offsetWidth; // リフロー強制
+            // 視覚演出
+            wrapper.classList.remove('violent-shake'); 
+            void wrapper.offsetWidth; 
             wrapper.classList.add('violent-shake');
             setTimeout(() => wrapper.classList.remove('violent-shake'), 300);
 
-            // ボタンを一瞬赤くする
+            // ボタン演出
             ignitionBtn.classList.add('revving');
             setTimeout(() => ignitionBtn.classList.remove('revving'), 150);
         }
 
         // 始動演出スケジュール
         function scheduleStartEffects() {
-            // 1. セルモーター: 弱い電流ノイズ (0s 〜 1.0s)
+            // 1. セルモーター (0s - 1.0s)
             document.body.classList.add('weak-noise');
             const t1 = setTimeout(() => {
                 document.body.classList.remove('weak-noise');
-                
-                // 2. 初爆: 激しいセピア変色 (1.0s 〜 1.5s)
+                // 2. 初爆 (1.0s - 1.5s)
                 document.body.classList.add('explosion-effect');
                 wrapper.classList.add('violent-shake');
             }, 1000);
 
-            // 初爆エフェクト終了
             const t2 = setTimeout(() => {
                 document.body.classList.remove('explosion-effect');
                 wrapper.classList.remove('violent-shake');
             }, 1500);
 
-            // 3. 最後の空ぶかし (59.0s - ON.m4aの長さに合わせて)
+            // 3. 最後の空ぶかし (59.0s)
             const t3 = setTimeout(() => {
                 wrapper.classList.add('violent-shake');
                 setTimeout(() => wrapper.classList.remove('violent-shake'), 500);
@@ -381,32 +371,28 @@
             effectTimers.push(t1, t2, t3);
         }
 
-        // エンジン完全停止 (1分経過 or EXIT)
+        // エンジン完全停止
         function stopEngineCompletely() {
             engineState = 'stopped';
             ignitionBtn.classList.remove('active-engine');
-            ignitionBtn.classList.add('locked'); // ロック状態の見た目があれば
+            ignitionBtn.classList.add('locked'); 
 
-            // 全エフェクトタイマー解除
             effectTimers.forEach(id => clearTimeout(id));
             effectTimers = [];
             
-            // 視覚クラス削除
             document.body.classList.remove('weak-noise');
             document.body.classList.remove('explosion-effect');
             wrapper.classList.remove('violent-shake');
             
-            // 音声停止（EXIT時用）
             mainEngineAudio.pause();
         }
 
-        // メイン音声終了時の処理
         mainEngineAudio.addEventListener('ended', () => {
             stopEngineCompletely();
         });
 
 
-        // --- UI Logic (SCROLL & NAV) ---
+        // --- UI Logic ---
         window.addEventListener('load', () => {
             scroller.scrollTo(window.innerWidth, 0);
         });
@@ -416,11 +402,8 @@
         document.getElementById('btn-next').addEventListener('click', () => 
             scroller.scrollBy({ left: window.innerWidth, behavior: 'smooth' }));
 
-        // --- EXIT処理 ---
         function closeShutterAndExit() {
-            // 強制停止
             stopEngineCompletely();
-
             const shutter = document.getElementById('shutter-door');
             shutter.classList.add('closed');
             setTimeout(() => {
@@ -432,9 +415,9 @@
             }, 700);
         }
 
-        // --- Mild Glitch (背景の悪ガキ演出) ---
+        // Mild Glitch
         const mildDistortion = () => {
-            if (engineState !== 'running') { // エンジン停止中は少し大人しくするなら条件追加
+            if (engineState !== 'running') { 
                 wrapper.classList.add('active');
                 setTimeout(() => { wrapper.classList.remove('active'); }, 200);
             }
