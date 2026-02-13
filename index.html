@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - FINAL FINISH</title>
+    <title>FACTORY GARAGE - GRAND FINALE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -158,7 +158,7 @@
             top: 0; left: 0;
             height: 100%;
             width: 100%; 
-            /* 0% - 70%: シアン (#00f0ff) -> アイドリング域を広げて赤を排除
+            /* 0% - 70%: シアン (#00f0ff) -> アイドリング域
                70% - 90%: シアン -> 赤
                90% - 100%: 赤 (#ff0055)
             */
@@ -261,7 +261,7 @@
                         </p>
                     </div>
                     <div>
-                        <!-- IGNITION Button with RPM Gauge (Masked) -->
+                        <!-- IGNITION Button -->
                         <button id="ignition-btn" class="neon-btn px-16 py-5 text-4xl tracking-widest" data-text="IGNITION">
                             <!-- マスク用コンテナ -->
                             <div id="rpm-gauge-mask">
@@ -308,6 +308,7 @@
         const mainEngineAudio = new Audio('ON.m4a');
         mainEngineAudio.loop = false;
         
+        // 状態管理: 'ready' -> 'running' -> 'stopping' -> 'stopped'
         let engineState = 'ready'; 
         let effectTimers = [];
         let idleInterval = null; 
@@ -337,6 +338,7 @@
             } else if (engineState === 'running') {
                 triggerRevving();
             }
+            // stopping や stopped の時は反応なし
         }
 
         // 1. エンジン始動
@@ -372,7 +374,6 @@
             }, 100); 
         }
 
-        // 振動停止
         function stopIdleVibration() {
             if (idleInterval) {
                 clearInterval(idleInterval);
@@ -381,7 +382,7 @@
             ignitionBtn.classList.remove('idle-vibration');
         }
 
-        // 2. 空ぶかし (Revving)
+        // 2. 空ぶかし (Revving) - 通常時
         function triggerRevving() {
             const revAudio = new Audio('BUN.m4a');
             revAudio.volume = 1.0;
@@ -398,31 +399,98 @@
 
             // === 演出の同期 (0.2秒後) ===
             setTimeout(() => {
-                // A. ゲージ演出
+                // ゲージ演出
                 rpmGaugeMask.style.transition = 'width 0.2s cubic-bezier(0.1, 0.7, 1.0, 0.1)'; 
-                rpmGaugeMask.style.width = '90%'; // レッドゾーンへ突入
+                rpmGaugeMask.style.width = '90%'; // レッドゾーン
 
-                // B. WARNING発光
+                // WARNING発光 (少し遅らせる)
                 setTimeout(() => {
                     ignitionBtn.classList.add('rev-glow');
                 }, 150);
 
-                // C. 回転落ち
+                // 回転落ち
                 setTimeout(() => {
                     rpmGaugeMask.style.transition = 'width 0.6s ease-out';
-                    rpmGaugeMask.style.width = '12%'; 
+                    rpmGaugeMask.style.width = '12%'; // アイドリングへ戻る
                     
                     ignitionBtn.classList.remove('rev-glow');
 
                     setTimeout(() => {
                         rpmGaugeMask.style.transition = ''; 
-                        // エンジンが動いていればアイドリング再開
                         if(engineState === 'running') startIdleVibration();
                     }, 600);
 
                 }, 300); 
 
             }, 200); 
+        }
+
+        // 3. 終了専用の強制空ぶかし (Final Shutdown Rev)
+        function triggerFinalShutdownRev() {
+            // ここでシステムを「終了モード」に移行
+            engineState = 'stopping';
+            
+            ignitionBtn.classList.remove('active-engine');
+            stopIdleVibration();
+
+            // 空ぶかし音再生
+            const revAudio = new Audio('BUN.m4a');
+            revAudio.volume = 1.0;
+            revAudio.currentTime = 0;
+            revAudio.play().catch(e => console.log(e));
+
+            // 画面揺れ
+            wrapper.classList.remove('violent-shake');
+            void wrapper.offsetWidth;
+            wrapper.classList.add('violent-shake');
+            setTimeout(() => wrapper.classList.remove('violent-shake'), 300);
+
+            // 0.2秒後: ゲージ跳ね上げ
+            setTimeout(() => {
+                // A. ゲージMAXへ
+                rpmGaugeMask.style.transition = 'width 0.2s cubic-bezier(0.1, 0.7, 1.0, 0.1)';
+                rpmGaugeMask.style.width = '90%';
+
+                // B. WARNING発光
+                setTimeout(() => {
+                    ignitionBtn.classList.add('rev-glow');
+                }, 150);
+
+                // C. シャットダウンフェーズ (さらに0.3秒後)
+                setTimeout(() => {
+                    // メインエンジン音をフェードアウト
+                    const fadeInterval = setInterval(() => {
+                        if (mainEngineAudio.volume > 0.05) {
+                            mainEngineAudio.volume -= 0.05;
+                        } else {
+                            clearInterval(fadeInterval);
+                            mainEngineAudio.pause();
+                            mainEngineAudio.currentTime = 0;
+                            mainEngineAudio.volume = 1.0;
+                        }
+                    }, 50);
+
+                    // ゲージを0まで落とす (ゆっくり)
+                    rpmGaugeMask.style.transition = 'width 1.5s ease-out';
+                    rpmGaugeMask.style.width = '0%';
+
+                    // 発光消す
+                    ignitionBtn.classList.remove('rev-glow');
+                    
+                    // 完全にロック
+                    ignitionBtn.classList.add('locked');
+                    engineState = 'locked';
+
+                    // 後処理
+                    setTimeout(() => {
+                        rpmGaugeMask.style.transition = '';
+                        document.body.classList.remove('weak-noise');
+                        document.body.classList.remove('explosion-effect');
+                    }, 1500);
+
+                }, 300);
+
+            }, 200);
         }
 
         // 始動演出スケジュール
@@ -448,24 +516,24 @@
                 rpmGaugeMask.style.width = '10%';
             }, 1500);
 
-            // 3. 最後の強制空ぶかし (59.0s)
+            // 最後の強制空ぶかし (55.0s に変更)
             const t3 = setTimeout(() => {
-                // 自動で空ぶかし演出を実行
-                triggerRevving();
-            }, 59000);
+                triggerFinalShutdownRev();
+            }, 55000);
 
             effectTimers.push(t1, t2, t3);
         }
 
-        // エンジン完全停止
+        // 強制停止 (EXIT時など)
         function stopEngineCompletely() {
-            engineState = 'stopped';
+            engineState = 'locked';
             
             stopIdleVibration();
             rpmGaugeMask.style.transition = 'width 1s ease-out';
             rpmGaugeMask.style.width = '0%'; 
 
             ignitionBtn.classList.remove('active-engine');
+            ignitionBtn.classList.remove('rev-glow');
             ignitionBtn.classList.add('locked'); 
 
             effectTimers.forEach(id => clearTimeout(id));
@@ -479,7 +547,8 @@
         }
 
         mainEngineAudio.addEventListener('ended', () => {
-            stopEngineCompletely();
+            // 普通に再生が終わった場合もロック (55秒の演出が優先されるので基本ここには来ないが念の為)
+            if (engineState !== 'locked') stopEngineCompletely();
         });
 
 
