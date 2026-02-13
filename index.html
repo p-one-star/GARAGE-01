@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - INSTANT REV</title>
+    <title>FACTORY GARAGE - REV DELAY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
     
@@ -279,8 +279,6 @@
         const LONG_PRESS_THRESHOLD = 300; // ms
 
         const handlePressStart = (e) => {
-            // PCのマウス操作などでドラッグ暴発を防ぐ
-            // e.preventDefault(); // ここでpreventDefaultするとクリックイベントが飛ばなくなる場合があるため注意
             pressStartTime = Date.now();
         };
 
@@ -329,21 +327,20 @@
         function triggerRevving() {
             const revAudio = new Audio('BUN.m4a');
             revAudio.volume = 1.0;
-            
-            // 【変更点】再生開始位置を0.3秒に進めてラグを解消
-            revAudio.currentTime = 0.3; 
-            
+            revAudio.currentTime = 0; // 頭から再生
             revAudio.play().catch(e => console.log(e));
 
-            // 視覚演出
+            // 視覚演出: 画面揺れ (タップと同時に揺らす)
             wrapper.classList.remove('violent-shake'); 
             void wrapper.offsetWidth; 
             wrapper.classList.add('violent-shake');
             setTimeout(() => wrapper.classList.remove('violent-shake'), 300);
 
-            // ボタン演出
-            ignitionBtn.classList.add('revving');
-            setTimeout(() => ignitionBtn.classList.remove('revving'), 150);
+            // ボタン演出: 0.3秒遅延 (音のピークに合わせる)
+            setTimeout(() => {
+                ignitionBtn.classList.add('revving');
+                setTimeout(() => ignitionBtn.classList.remove('revving'), 150);
+            }, 300);
         }
 
         // 始動演出スケジュール
@@ -415,7 +412,6 @@
             }, 700);
         }
 
-        // Mild Glitch
         const mildDistortion = () => {
             if (engineState !== 'running') { 
                 wrapper.classList.add('active');
