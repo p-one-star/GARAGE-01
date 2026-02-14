@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - EXIT SOUND</title>
+    <title>FACTORY GARAGE - HEAVY SYNC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rubik+Wet+Paint&display=swap" rel="stylesheet">
     
@@ -69,7 +69,10 @@
             background-color: #000000; 
             z-index: 9999;
             transform: translateY(-100%); 
-            transition: transform 1.6s cubic-bezier(0.6, -0.05, 0.7, 0.5);
+            
+            /* 修正: 2.5秒かけてゆっくり閉めることで音源の長さに合わせる */
+            transition: transform 2.5s cubic-bezier(0.6, -0.05, 0.7, 0.5);
+            
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             
             background-image: repeating-linear-gradient(
@@ -97,7 +100,8 @@
         .shutter-content {
             text-align: center;
             opacity: 0;
-            transition: opacity 0.2s 0.8s; 
+            /* 文字が出るタイミングも少し遅らせる */
+            transition: opacity 0.2s 1.5s; 
             transform: rotate(-3deg);
             position: relative;
         }
@@ -152,7 +156,7 @@
             position: relative; background: transparent; border: none;
         }
 
-        /* --- IGNITIONボタン & RPMゲージ (マスク方式) --- */
+        /* --- IGNITIONボタン & RPMゲージ --- */
         .neon-btn {
             position: relative;
             background: transparent;
@@ -344,7 +348,7 @@
         const finalRevAudio = new Audio('BUN.m4a');
         finalRevAudio.preload = 'auto'; 
 
-        // EXIT音源追加
+        // EXIT音源
         const exitAudio = new Audio('EXIT.m4a');
         exitAudio.preload = 'auto';
         
@@ -383,7 +387,7 @@
         function startEngineSequence() {
             engineState = 'running';
             
-            // プリロード処理: 全音源をユーザー操作時に一瞬再生して許可を得る
+            // プリロード処理
             [finalRevAudio, exitAudio].forEach(audio => {
                 audio.volume = 0; 
                 audio.play().then(() => {
@@ -578,20 +582,21 @@
         function closeShutterAndExit() {
             stopEngineCompletely();
             
-            // EXIT音再生
             exitAudio.currentTime = 0;
             exitAudio.volume = 1.0;
             exitAudio.play().catch(e => console.log("Exit sound error:", e));
 
             const shutter = document.getElementById('shutter-door');
             shutter.classList.add('closed');
+            
+            // 修正: ページ遷移を3.5秒後に遅延（シャッター閉鎖2.5秒 + 余韻1秒）
             setTimeout(() => {
                 if (window.history.length > 1) {
                     window.history.back();
                 } else {
                     console.log("No history.");
                 }
-            }, 2000);
+            }, 3500);
         }
 
         const mildDistortion = () => {
