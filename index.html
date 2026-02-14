@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - WARNING MARK</title>
+    <title>FACTORY GARAGE - EXIT SOUND</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Fonts: Black Ops One (UI用) / Rubik Wet Paint (シャッター落書き用) -->
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rubik+Wet+Paint&display=swap" rel="stylesheet">
     
     <style>
@@ -94,30 +93,15 @@
             box-shadow: 0 -10px 30px rgba(0, 0, 0, 1);
         }
 
-        /* 警告コンテンツコンテナ */
+        /* 警告テキストコンテナ */
         .shutter-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
             opacity: 0;
             transition: opacity 0.2s 0.8s; 
             transform: rotate(-3deg);
-            gap: 1vh; /* マークと文字の間隔 */
+            position: relative;
         }
         #shutter-door.closed .shutter-content { opacity: 1; }
-
-        /* 警告マーク (SVG) */
-        .warning-icon {
-            width: 15vw;
-            height: 15vw;
-            color: var(--blood-red);
-            /* スプレーの滲みと影 */
-            filter: drop-shadow(0 0 5px rgba(138, 0, 0, 0.8)) drop-shadow(2px 2px 0px #000);
-            
-            /* ノイズテクスチャでザラザラ感を出す */
-            -webkit-mask-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)" opacity="0.9"/%3E%3C/svg%3E');
-        }
 
         /* グラフィティ風警告文字 */
         .graffiti-text {
@@ -125,14 +109,12 @@
             font-size: 14vw;
             color: var(--blood-red);
             line-height: 0.85;
-            text-align: center;
-            
             text-shadow: 
                 0 0 10px rgba(138, 0, 0, 0.8),
                 2px 2px 0px #000,
                 4px 10px 20px rgba(0,0,0,0.9);
-            
             -webkit-mask-image: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="3"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)" opacity="0.95"/%3E%3C/svg%3E');
+            position: relative;
         }
 
         /* --- ノイズオーバーレイ --- */
@@ -268,17 +250,10 @@
     <!-- シャッター -->
     <div id="shutter-door">
         <div class="shutter-content">
-            <!-- 警告マーク (SVG) -->
-            <svg class="warning-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2v-2zm0-6h2v4h-2v-4z"/>
-            </svg>
-            <!-- 警告テキスト -->
             <div class="graffiti-text">
                 RESTRICTED<br>AREA
             </div>
         </div>
-        
-        <!-- シンプルな下部バー -->
         <div class="shutter-bottom-bar"></div>
     </div>
 
@@ -368,6 +343,10 @@
         
         const finalRevAudio = new Audio('BUN.m4a');
         finalRevAudio.preload = 'auto'; 
+
+        // EXIT音源追加
+        const exitAudio = new Audio('EXIT.m4a');
+        exitAudio.preload = 'auto';
         
         let engineState = 'ready'; 
         let effectTimers = [];
@@ -404,12 +383,15 @@
         function startEngineSequence() {
             engineState = 'running';
             
-            finalRevAudio.volume = 0; 
-            finalRevAudio.play().then(() => {
-                finalRevAudio.pause();
-                finalRevAudio.currentTime = 0;
-                finalRevAudio.volume = 1.0; 
-            }).catch(e => console.log("Preload error:", e));
+            // プリロード処理: 全音源をユーザー操作時に一瞬再生して許可を得る
+            [finalRevAudio, exitAudio].forEach(audio => {
+                audio.volume = 0; 
+                audio.play().then(() => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audio.volume = 1.0; 
+                }).catch(e => console.log("Preload error:", e));
+            });
 
             mainEngineAudio.volume = 1.0; 
             mainEngineAudio.currentTime = 0;
@@ -445,7 +427,7 @@
             ignitionBtn.classList.remove('idle-vibration');
         }
 
-        // 2. 空ぶかし (Revving) - 通常時
+        // 2. 空ぶかし (Revving)
         function triggerRevving() {
             const revAudio = new Audio('BUN.m4a');
             revAudio.volume = 1.0;
@@ -595,6 +577,12 @@
 
         function closeShutterAndExit() {
             stopEngineCompletely();
+            
+            // EXIT音再生
+            exitAudio.currentTime = 0;
+            exitAudio.volume = 1.0;
+            exitAudio.play().catch(e => console.log("Exit sound error:", e));
+
             const shutter = document.getElementById('shutter-door');
             shutter.classList.add('closed');
             setTimeout(() => {
