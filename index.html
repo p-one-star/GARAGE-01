@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - HEAVY SYNC</title>
+    <title>FACTORY GARAGE - SHUTTER SYNC FIX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rubik+Wet+Paint&display=swap" rel="stylesheet">
     
@@ -70,8 +70,8 @@
             z-index: 9999;
             transform: translateY(-100%); 
             
-            /* 修正: 2.5秒かけてゆっくり閉めることで音源の長さに合わせる */
-            transition: transform 2.5s cubic-bezier(0.6, -0.05, 0.7, 0.5);
+            /* 修正: 2.0秒に短縮して音に合わせる */
+            transition: transform 2.0s cubic-bezier(0.6, -0.05, 0.7, 0.5);
             
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             
@@ -100,8 +100,7 @@
         .shutter-content {
             text-align: center;
             opacity: 0;
-            /* 文字が出るタイミングも少し遅らせる */
-            transition: opacity 0.2s 1.5s; 
+            transition: opacity 0.2s 1.2s; /* 表示タイミングも少し調整 */
             transform: rotate(-3deg);
             position: relative;
         }
@@ -156,7 +155,7 @@
             position: relative; background: transparent; border: none;
         }
 
-        /* --- IGNITIONボタン & RPMゲージ --- */
+        /* --- IGNITIONボタン & RPMゲージ (マスク方式) --- */
         .neon-btn {
             position: relative;
             background: transparent;
@@ -195,6 +194,10 @@
             top: 0; left: 0;
             height: 100%;
             width: 100%; 
+            /* 0% - 70%: シアン (#00f0ff) -> アイドリング域
+               70% - 90%: シアン -> 赤
+               90% - 100%: 赤 (#ff0055)
+            */
             background: linear-gradient(
                 90deg, 
                 rgba(0, 240, 255, 0.7) 0%, 
@@ -253,11 +256,14 @@
 
     <!-- シャッター -->
     <div id="shutter-door">
+        <!-- 警告テキスト -->
         <div class="shutter-content">
             <div class="graffiti-text">
                 RESTRICTED<br>AREA
             </div>
         </div>
+        
+        <!-- シンプルな下部バー -->
         <div class="shutter-bottom-bar"></div>
     </div>
 
@@ -348,7 +354,6 @@
         const finalRevAudio = new Audio('BUN.m4a');
         finalRevAudio.preload = 'auto'; 
 
-        // EXIT音源
         const exitAudio = new Audio('EXIT.m4a');
         exitAudio.preload = 'auto';
         
@@ -431,7 +436,7 @@
             ignitionBtn.classList.remove('idle-vibration');
         }
 
-        // 2. 空ぶかし (Revving)
+        // 2. 空ぶかし (Revving) - 通常時
         function triggerRevving() {
             const revAudio = new Audio('BUN.m4a');
             revAudio.volume = 1.0;
@@ -589,14 +594,14 @@
             const shutter = document.getElementById('shutter-door');
             shutter.classList.add('closed');
             
-            // 修正: ページ遷移を3.5秒後に遅延（シャッター閉鎖2.5秒 + 余韻1秒）
+            // 修正: ページ遷移を3.0秒後に設定 (シャッター2.0秒 + 余韻1.0秒)
             setTimeout(() => {
                 if (window.history.length > 1) {
                     window.history.back();
                 } else {
                     console.log("No history.");
                 }
-            }, 3500);
+            }, 3000);
         }
 
         const mildDistortion = () => {
