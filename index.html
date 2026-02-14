@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FACTORY GARAGE - SHUTTER SYNC FIX</title>
+    <title>FACTORY GARAGE - SHUTTER FINAL SYNC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Rubik+Wet+Paint&display=swap" rel="stylesheet">
     
@@ -70,8 +70,8 @@
             z-index: 9999;
             transform: translateY(-100%); 
             
-            /* 修正: 2.0秒に短縮して音に合わせる */
-            transition: transform 2.0s cubic-bezier(0.6, -0.05, 0.7, 0.5);
+            /* 修正: 2.3秒に変更 */
+            transition: transform 2.3s cubic-bezier(0.6, -0.05, 0.7, 0.5);
             
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             
@@ -100,7 +100,7 @@
         .shutter-content {
             text-align: center;
             opacity: 0;
-            transition: opacity 0.2s 1.2s; /* 表示タイミングも少し調整 */
+            transition: opacity 0.2s 1.2s; 
             transform: rotate(-3deg);
             position: relative;
         }
@@ -194,10 +194,6 @@
             top: 0; left: 0;
             height: 100%;
             width: 100%; 
-            /* 0% - 70%: シアン (#00f0ff) -> アイドリング域
-               70% - 90%: シアン -> 赤
-               90% - 100%: 赤 (#ff0055)
-            */
             background: linear-gradient(
                 90deg, 
                 rgba(0, 240, 255, 0.7) 0%, 
@@ -594,14 +590,13 @@
             const shutter = document.getElementById('shutter-door');
             shutter.classList.add('closed');
             
-            // 修正: ページ遷移を3.0秒後に設定 (シャッター2.0秒 + 余韻1.0秒)
             setTimeout(() => {
                 if (window.history.length > 1) {
                     window.history.back();
                 } else {
                     console.log("No history.");
                 }
-            }, 3000);
+            }, 3300); // 2.3s + 1.0s余韻
         }
 
         const mildDistortion = () => {
